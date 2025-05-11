@@ -8,9 +8,9 @@
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: 'Courier New', Courier, monospace;
       background: #000;
-      color: #0f0;
+      color: #00ff88;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -23,8 +23,10 @@
     }
 
     #clock-digital {
-      font-size: 12vw;
-      letter-spacing: 0.05em;
+      font-size: 14vw;
+      font-weight: bold;
+      letter-spacing: 0.1em;
+      text-shadow: 0 0 20px #00ff88, 0 0 30px #00ff88;
     }
 
     canvas {
@@ -40,17 +42,18 @@
     }
 
     button {
-      background: #222;
-      color: #0f0;
-      border: none;
+      background: #111;
+      color: #00ff88;
+      border: 1px solid #00ff88;
       padding: 10px 14px;
       font-size: 14px;
       cursor: pointer;
       border-radius: 5px;
+      transition: background 0.3s, color 0.3s;
     }
 
     button:hover {
-      background: #0f0;
+      background: #00ff88;
       color: #000;
     }
   </style>
@@ -62,7 +65,7 @@
     <button onclick="toggleFullscreen()">Fullscreen</button>
   </div>
 
-  <div id="clock-digital">00:00:00</div>
+  <div id="clock-digital">00:00:00 AM</div>
   <canvas id="clock-analog" width="400" height="400"></canvas>
 
   <script>
@@ -87,29 +90,51 @@
 
     function updateDigitalClock() {
       const now = new Date();
-      const timeString = now.toLocaleTimeString();
+      let hours = now.getHours();
+      const minutes = now.getMinutes();
+      const seconds = now.getSeconds();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+
+      hours = hours % 12;
+      hours = hours ? hours : 12; // 0 becomes 12
+
+      const timeString = [
+        String(hours).padStart(2, '0'),
+        String(minutes).padStart(2, '0'),
+        String(seconds).padStart(2, '0')
+      ].join(':') + ' ' + ampm;
+
       digitalClock.textContent = timeString;
     }
 
     function drawAnalogClock() {
       const now = new Date();
       const radius = analogClock.height / 2;
+      ctx.save();
+      ctx.clearRect(0, 0, analogClock.width, analogClock.height);
       ctx.translate(radius, radius);
-      ctx.clearRect(-radius, -radius, analogClock.width, analogClock.height);
 
+      // Draw clock circle
       ctx.beginPath();
       ctx.arc(0, 0, radius - 5, 0, 2 * Math.PI);
-      ctx.strokeStyle = '#0f0';
-      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#00ff88';
+      ctx.lineWidth = 8;
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#00ff88';
       ctx.stroke();
 
-      // Hour marks
+      // Numbers
+      ctx.font = `${radius * 0.15}px monospace`;
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#00ff88';
       for (let num = 1; num <= 12; num++) {
         const ang = num * Math.PI / 6;
         ctx.rotate(ang);
         ctx.translate(0, -radius + 30);
-        ctx.fillStyle = "#0f0";
-        ctx.fillText(num.toString(), -5, 5);
+        ctx.rotate(-ang);
+        ctx.fillText(num.toString(), 0, 0);
+        ctx.rotate(ang);
         ctx.translate(0, radius - 30);
         ctx.rotate(-ang);
       }
@@ -119,17 +144,18 @@
       const minute = now.getMinutes();
       const second = now.getSeconds();
 
-      drawHand((hour * Math.PI / 6) + (minute * Math.PI / (6 * 60)), radius * 0.5, 6);  // Hour hand
-      drawHand((minute * Math.PI / 30), radius * 0.8, 4);                               // Minute hand
-      drawHand((second * Math.PI / 30), radius * 0.9, 2);                               // Second hand
+      drawHand((hour + minute / 60) * Math.PI / 6, radius * 0.5, 6); // Hour
+      drawHand((minute + second / 60) * Math.PI / 30, radius * 0.8, 4); // Minute
+      drawHand(second * Math.PI / 30, radius * 0.9, 2, '#ff4444'); // Second
 
-      ctx.translate(-radius, -radius);
+      ctx.restore();
     }
 
-    function drawHand(pos, length, width) {
+    function drawHand(pos, length, width, color = '#00ff88') {
       ctx.beginPath();
       ctx.lineWidth = width;
-      ctx.strokeStyle = "#0f0";
+      ctx.strokeStyle = color;
+      ctx.lineCap = "round";
       ctx.moveTo(0, 0);
       ctx.rotate(pos);
       ctx.lineTo(0, -length);
