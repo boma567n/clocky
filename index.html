@@ -3,19 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="description" content="A fullscreen online clock with analog and digital modes. Great for presentations, focus, and more.">
-  <title>Clocky - Fullscreen Online Clock</title>
+  <meta name="description" content="A fullscreen modern online clock with analog and digital styles.">
+  <title>Clocky - Fullscreen LED Clock</title>
   <style>
     body {
       margin: 0;
-      font-family: 'Courier New', Courier, monospace;
-      background: #000;
-      color: #00ff88;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #000;
+      color: #00bfff;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
+      overflow: hidden;
     }
 
     #clock-digital, #clock-analog {
@@ -25,8 +26,20 @@
     #clock-digital {
       font-size: 14vw;
       font-weight: bold;
-      letter-spacing: 0.1em;
-      text-shadow: 0 0 20px #00ff88, 0 0 30px #00ff88;
+      letter-spacing: 0.05em;
+      text-shadow: 0 0 20px #00bfff, 0 0 30px #00bfff;
+      position: relative;
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+    }
+
+    #ampm {
+      font-size: 0.3em;
+      margin-left: 10px;
+      position: relative;
+      top: -1.5em;
+      opacity: 0.8;
     }
 
     canvas {
@@ -43,8 +56,8 @@
 
     button {
       background: #111;
-      color: #00ff88;
-      border: 1px solid #00ff88;
+      color: #00bfff;
+      border: 1px solid #00bfff;
       padding: 10px 14px;
       font-size: 14px;
       cursor: pointer;
@@ -53,7 +66,7 @@
     }
 
     button:hover {
-      background: #00ff88;
+      background: #00bfff;
       color: #000;
     }
   </style>
@@ -65,8 +78,12 @@
     <button onclick="toggleFullscreen()">Fullscreen</button>
   </div>
 
-  <div id="clock-digital">00:00:00 AM</div>
-  <canvas id="clock-analog" width="400" height="400"></canvas>
+  <div id="clock-digital">
+    <div id="time">00:00:00</div>
+    <div id="ampm">AM</div>
+  </div>
+
+  <canvas id="clock-analog" width="500" height="500"></canvas>
 
   <script>
     let showingDigital = true;
@@ -76,7 +93,7 @@
 
     function toggleClock() {
       showingDigital = !showingDigital;
-      digitalClock.style.display = showingDigital ? 'block' : 'none';
+      digitalClock.style.display = showingDigital ? 'flex' : 'none';
       analogClock.style.display = showingDigital ? 'none' : 'block';
     }
 
@@ -96,15 +113,16 @@
       const ampm = hours >= 12 ? 'PM' : 'AM';
 
       hours = hours % 12;
-      hours = hours ? hours : 12; // 0 becomes 12
+      hours = hours ? hours : 12;
 
       const timeString = [
         String(hours).padStart(2, '0'),
         String(minutes).padStart(2, '0'),
         String(seconds).padStart(2, '0')
-      ].join(':') + ' ' + ampm;
+      ].join(':');
 
-      digitalClock.textContent = timeString;
+      document.getElementById('time').textContent = timeString;
+      document.getElementById('ampm').textContent = ampm;
     }
 
     function drawAnalogClock() {
@@ -114,29 +132,27 @@
       ctx.clearRect(0, 0, analogClock.width, analogClock.height);
       ctx.translate(radius, radius);
 
-      // Draw clock circle
+      // Clock border
       ctx.beginPath();
       ctx.arc(0, 0, radius - 5, 0, 2 * Math.PI);
-      ctx.strokeStyle = '#00ff88';
-      ctx.lineWidth = 8;
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = '#00ff88';
+      ctx.strokeStyle = '#00bfff';
+      ctx.lineWidth = 6;
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = '#00bfff';
       ctx.stroke();
 
-      // Numbers
-      ctx.font = `${radius * 0.15}px monospace`;
-      ctx.textBaseline = 'middle';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#00ff88';
-      for (let num = 1; num <= 12; num++) {
-        const ang = num * Math.PI / 6;
-        ctx.rotate(ang);
-        ctx.translate(0, -radius + 30);
-        ctx.rotate(-ang);
-        ctx.fillText(num.toString(), 0, 0);
-        ctx.rotate(ang);
-        ctx.translate(0, radius - 30);
-        ctx.rotate(-ang);
+      // Tick marks
+      for (let i = 0; i < 60; i++) {
+        const angle = (i * Math.PI) / 30;
+        const length = i % 5 === 0 ? 15 : 7;
+        ctx.beginPath();
+        ctx.rotate(angle);
+        ctx.moveTo(0, -radius + 5);
+        ctx.lineTo(0, -radius + 5 + length);
+        ctx.lineWidth = i % 5 === 0 ? 2 : 1;
+        ctx.strokeStyle = '#00bfff';
+        ctx.stroke();
+        ctx.rotate(-angle);
       }
 
       // Hands
@@ -144,14 +160,14 @@
       const minute = now.getMinutes();
       const second = now.getSeconds();
 
-      drawHand((hour + minute / 60) * Math.PI / 6, radius * 0.5, 6); // Hour
-      drawHand((minute + second / 60) * Math.PI / 30, radius * 0.8, 4); // Minute
-      drawHand(second * Math.PI / 30, radius * 0.9, 2, '#ff4444'); // Second
+      drawHand((hour + minute / 60) * Math.PI / 6, radius * 0.5, 6);
+      drawHand((minute + second / 60) * Math.PI / 30, radius * 0.75, 4);
+      drawHand(second * Math.PI / 30, radius * 0.85, 2, '#ff4444');
 
       ctx.restore();
     }
 
-    function drawHand(pos, length, width, color = '#00ff88') {
+    function drawHand(pos, length, width, color = '#00bfff') {
       ctx.beginPath();
       ctx.lineWidth = width;
       ctx.strokeStyle = color;
@@ -172,8 +188,8 @@
     }
 
     // Init
-    toggleClock(); // Show digital first
-    toggleClock(); // Show again to trigger setup
+    toggleClock(); // show digital
+    toggleClock(); // re-toggle to initialize
     loop();
   </script>
 
