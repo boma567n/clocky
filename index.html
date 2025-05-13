@@ -4,23 +4,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Clocky - Fullscreen Online Clock</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #000;
-      --fg: #00bfff;
-      --accent: #00bfff;
+      --fg: #00f0ff;
+      --accent: #00f0ff;
     }
 
     body.light {
-      --bg: #ffffff;
-      --fg: #111111;
+      --bg: #fff;
+      --fg: #111;
       --accent: #0077cc;
     }
 
     body {
       margin: 0;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Share Tech Mono', monospace;
       background-color: var(--bg);
       color: var(--fg);
       display: flex;
@@ -34,7 +34,7 @@
 
     #clock-digital {
       font-size: 12vw;
-      font-weight: 700;
+      font-weight: normal;
       display: flex;
       align-items: baseline;
       justify-content: center;
@@ -43,30 +43,31 @@
     }
 
     #ampm {
-      font-size: 0.3em;
-      margin-left: 10px;
+      font-size: 0.25em;
+      margin-left: 8px;
       opacity: 0.6;
     }
 
     #date {
-      font-size: 5vw;
+      font-size: 4vw;
       margin-top: 10px;
-      opacity: 0.8;
+      opacity: 0.75;
       text-align: center;
     }
 
     canvas {
       background: var(--bg);
       max-width: 90vw;
-      max-height: 90vw;
+      max-height: 90vh;
     }
 
-    .buttons {
+    .buttons, #exitFullscreenBtn {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 10px;
       margin-bottom: 20px;
+      z-index: 10;
     }
 
     button, select {
@@ -89,16 +90,29 @@
       background: var(--bg);
     }
 
+    #exitFullscreenBtn {
+      display: none;
+    }
+
+    .fullscreen-active .buttons {
+      display: none;
+    }
+
+    .fullscreen-active #exitFullscreenBtn {
+      display: flex;
+      margin-top: 10px;
+    }
+
     @media (max-width: 600px) {
       #clock-digital {
         font-size: 18vw;
       }
 
       #date {
-        font-size: 6vw;
+        font-size: 5vw;
       }
 
-      .buttons {
+      .buttons, #exitFullscreenBtn {
         flex-direction: column;
         align-items: center;
       }
@@ -125,11 +139,15 @@
     </select>
   </div>
 
+  <div id="exitFullscreenBtn">
+    <button onclick="exitFullscreen()">Exit Fullscreen</button>
+  </div>
+
   <div id="clock-digital">
     <div id="time">00:00:00</div>
     <div id="ampm">AM</div>
   </div>
-  <div id="date">2025/05/13</div>
+  <div id="date">Tuesday, 2025/05/13</div>
 
   <canvas id="clock-analog" width="400" height="400" style="display: none;"></canvas>
 
@@ -157,6 +175,10 @@
       } else {
         document.exitFullscreen();
       }
+    }
+
+    function exitFullscreen() {
+      document.exitFullscreen();
     }
 
     function toggleTheme() {
@@ -195,6 +217,7 @@
       const yyyy = now.getFullYear();
       const mm = String(now.getMonth() + 1).padStart(2, '0');
       const dd = String(now.getDate()).padStart(2, '0');
+      const weekday = now.toLocaleDateString(undefined, { weekday: 'long' });
 
       let dateString = '';
       switch (format) {
@@ -209,12 +232,12 @@
           break;
       }
 
-      dateEl.textContent = dateString;
+      dateEl.textContent = `${weekday}, ${dateString}`;
     }
 
     function drawAnalogClock() {
       const now = new Date();
-      const canvasSize = Math.min(window.innerWidth, window.innerHeight) * 0.9;
+      const canvasSize = Math.min(window.innerWidth, window.innerHeight) * 0.6;
       analogClock.width = canvasSize;
       analogClock.height = canvasSize;
       const radius = analogClock.height / 2;
@@ -271,6 +294,15 @@
       if (!showingDigital) drawAnalogClock();
       requestAnimationFrame(loop);
     }
+
+    // Fullscreen toggle UI
+    document.addEventListener("fullscreenchange", () => {
+      if (document.fullscreenElement) {
+        document.body.classList.add('fullscreen-active');
+      } else {
+        document.body.classList.remove('fullscreen-active');
+      }
+    });
 
     toggleClock(); // init analog hidden
     toggleClock(); // reset to digital
