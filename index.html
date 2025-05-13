@@ -139,9 +139,6 @@
     </select>
   </div>
 
-  <div id="exitFullscreenBtn">
-    <button onclick="exitFullscreen()">Exit Fullscreen</button>
-  </div>
 
   <div id="clock-digital">
     <div id="time">00:00:00</div>
@@ -296,13 +293,15 @@
     }
 
     // Fullscreen toggle UI
-    document.addEventListener("fullscreenchange", () => {
-      if (document.fullscreenElement) {
-        document.body.classList.add('fullscreen-active');
-      } else {
-        document.body.classList.remove('fullscreen-active');
-      }
-    });
+    // Remove the fullscreen toggle button behavior
+// document.addEventListener("fullscreenchange", () => {
+//   if (document.fullscreenElement) {
+//     document.body.classList.add('fullscreen-active');
+//   } else {
+//     document.body.classList.remove('fullscreen-active');
+//   }
+// });
+
 
     toggleClock(); // init analog hidden
     toggleClock(); // reset to digital
