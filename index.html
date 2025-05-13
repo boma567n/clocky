@@ -1,22 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="description" content="A fullscreen modern online clock with analog and digital styles.">
-  <title>Clocky - Fullscreen LED Clock</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A customizable fullscreen modern clock with digital and analog options.">
+  <title>Clocky - Customizable Fullscreen Clock</title>
   <style>
     body {
       margin: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #000;
-      color: #00bfff;
+      color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
       overflow: hidden;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    #clock-container {
+      text-align: center;
     }
 
     #clock-digital, #clock-analog {
@@ -24,26 +29,31 @@
     }
 
     #clock-digital {
-      font-size: 14vw;
+      font-size: 8vw;
       font-weight: bold;
       letter-spacing: 0.05em;
-      text-shadow: 0 0 20px #00bfff, 0 0 30px #00bfff;
-      position: relative;
+      text-shadow: 0 0 20px #fff, 0 0 30px #fff;
       display: flex;
       align-items: baseline;
       justify-content: center;
     }
 
     #ampm {
-      font-size: 0.3em;
+      font-size: 0.5em;
       margin-left: 10px;
       position: relative;
-      top: -1.5em;
+      top: -0.5em;
       opacity: 0.8;
     }
 
+    #day-date {
+      margin-top: 10px;
+      font-size: 1.5vw;
+      text-shadow: 0 0 10px #fff;
+    }
+
     canvas {
-      background: #000;
+      background: transparent;
     }
 
     .buttons {
@@ -56,8 +66,8 @@
 
     button {
       background: #111;
-      color: #00bfff;
-      border: 1px solid #00bfff;
+      color: #fff;
+      border: 1px solid #fff;
       padding: 10px 14px;
       font-size: 14px;
       cursor: pointer;
@@ -66,30 +76,57 @@
     }
 
     button:hover {
-      background: #00bfff;
+      background: #fff;
       color: #000;
+    }
+
+    .dark-mode {
+      background-color: #000;
+      color: #fff;
+    }
+
+    .light-mode {
+      background-color: #fff;
+      color: #000;
+    }
+
+    .light-mode button {
+      background: #ddd;
+      color: #000;
+      border: 1px solid #000;
+    }
+
+    .light-mode button:hover {
+      background: #000;
+      color: #fff;
     }
   </style>
 </head>
-<body>
+<body class="dark-mode">
 
   <div class="buttons">
     <button onclick="toggleClock()">Switch Clock</button>
     <button onclick="toggleFullscreen()">Fullscreen</button>
+    <button onclick="toggleMode()">Toggle Light/Dark Mode</button>
+    <button onclick="toggleFormat()">Toggle 12/24 Hour</button>
   </div>
 
-  <div id="clock-digital">
-    <div id="time">00:00:00</div>
-    <div id="ampm">AM</div>
+  <div id="clock-container">
+    <div id="clock-digital">
+      <div id="time">00:00:00</div>
+      <div id="ampm">AM</div>
+    </div>
+    <canvas id="clock-analog" width="400" height="400"></canvas>
+    <div id="day-date">Tuesday, May 13, 2025</div>
   </div>
-
-  <canvas id="clock-analog" width="500" height="500"></canvas>
 
   <script>
     let showingDigital = true;
+    let is24Hour = false;
     const digitalClock = document.getElementById('clock-digital');
     const analogClock = document.getElementById('clock-analog');
     const ctx = analogClock.getContext('2d');
+    const dayDate = document.getElementById('day-date');
 
     function toggleClock() {
       showingDigital = !showingDigital;
@@ -105,6 +142,16 @@
       }
     }
 
+    function toggleMode() {
+      document.body.classList.toggle('dark-mode');
+      document.body.classList.toggle('light-mode');
+    }
+
+    function toggleFormat() {
+      is24Hour = !is24Hour;
+      document.getElementById('ampm').style.display = is24Hour ? 'none' : 'inline';
+    }
+
     function updateDigitalClock() {
       const now = new Date();
       let hours = now.getHours();
@@ -112,8 +159,10 @@
       const seconds = now.getSeconds();
       const ampm = hours >= 12 ? 'PM' : 'AM';
 
-      hours = hours % 12;
-      hours = hours ? hours : 12;
+      if (!is24Hour) {
+        hours = hours % 12;
+        hours = hours ? hours : 12; // 12-hour format
+      }
 
       const timeString = [
         String(hours).padStart(2, '0'),
@@ -123,6 +172,9 @@
 
       document.getElementById('time').textContent = timeString;
       document.getElementById('ampm').textContent = ampm;
+
+      const dayOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      dayDate.textContent = now.toLocaleDateString(undefined, dayOptions);
     }
 
     function drawAnalogClock() {
@@ -135,10 +187,10 @@
       // Clock border
       ctx.beginPath();
       ctx.arc(0, 0, radius - 5, 0, 2 * Math.PI);
-      ctx.strokeStyle = '#00bfff';
+      ctx.strokeStyle = '#fff';
       ctx.lineWidth = 6;
       ctx.shadowBlur = 15;
-      ctx.shadowColor = '#00bfff';
+      ctx.shadowColor = '#fff';
       ctx.stroke();
 
       // Tick marks
@@ -150,7 +202,7 @@
         ctx.moveTo(0, -radius + 5);
         ctx.lineTo(0, -radius + 5 + length);
         ctx.lineWidth = i % 5 === 0 ? 2 : 1;
-        ctx.strokeStyle = '#00bfff';
+        ctx.strokeStyle = '#fff';
         ctx.stroke();
         ctx.rotate(-angle);
       }
@@ -167,7 +219,7 @@
       ctx.restore();
     }
 
-    function drawHand(pos, length, width, color = '#00bfff') {
+    function drawHand(pos, length, width, color = '#fff') {
       ctx.beginPath();
       ctx.lineWidth = width;
       ctx.strokeStyle = color;
