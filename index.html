@@ -2,29 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Clocky - Fullscreen Clock</title>
   <style>
     :root {
-      --led-color: #00ffe0;
-      --bg-dark: #000;
-      --bg-light: #f9f9f9;
-      --font-dark: #111;
-      --font-light: #fff;
+      --bg-light: #f4f4f4;
+      --bg-dark: #000000;
+      --text-light: #000000;
+      --text-dark: #00ffcc;
+      --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
     body {
       margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 0;
+      font-family: var(--font-main);
       background-color: var(--bg-dark);
-      color: var(--led-color);
+      color: var(--text-dark);
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       height: 100vh;
       overflow: hidden;
-      transition: background-color 0.3s, color 0.3s;
+      transition: background-color 0.5s, color 0.5s;
+    }
+
+    .light-mode {
+      background-color: var(--bg-light);
+      color: var(--text-light);
     }
 
     .controls {
@@ -32,83 +38,65 @@
       top: 10px;
       right: 10px;
       display: flex;
-      flex-wrap: wrap;
       gap: 10px;
-      z-index: 10;
+      z-index: 1000;
     }
 
-    button, select {
+    .controls button,
+    .controls select {
       padding: 6px 10px;
       font-size: 14px;
       border: none;
-      border-radius: 5px;
+      border-radius: 4px;
       cursor: pointer;
     }
 
-    .digital {
-      font-size: 10vw;
-      font-weight: 300;
+    .clock-container {
       display: flex;
-      align-items: flex-end;
-      justify-content: center;
+      flex-direction: column;
+      align-items: center;
     }
 
-    .am-pm {
-      font-size: 2.5vw;
+    .digital {
+      font-size: 7vw;
+      letter-spacing: 2px;
+      font-weight: 300;
+      display: flex;
+      align-items: baseline;
+    }
+
+    .digital span {
       margin-left: 10px;
-      align-self: flex-end;
+      font-size: 2vw;
     }
 
     .date {
-      font-size: 1.8vw;
+      font-size: 2vw;
       margin-top: 10px;
     }
 
-    .analog {
-      width: 220px;
-      height: 220px;
-      border: 4px solid var(--led-color);
-      border-radius: 50%;
-      position: relative;
-      margin-top: 30px;
+    canvas {
+      margin-top: 40px;
     }
 
-    .hand {
-      position: absolute;
-      width: 50%;
-      height: 2px;
-      background-color: var(--led-color);
-      top: 50%;
-      transform-origin: 100%;
-      transform: rotate(90deg);
-    }
-
-    .light-mode {
-      background-color: var(--bg-light);
-      color: var(--font-dark);
-    }
-
-    @media (max-width: 600px) {
+    @media (max-width: 768px) {
       .digital {
-        font-size: 15vw;
+        font-size: 12vw;
       }
-
-      .am-pm {
-        font-size: 5vw;
+      .digital span {
+        font-size: 4vw;
       }
-
       .date {
         font-size: 4vw;
       }
-
-      .analog {
-        width: 180px;
-        height: 180px;
+      canvas {
+        width: 200px;
+        height: 200px;
       }
     }
   </style>
 </head>
-<body class="dark-mode">
+<body>
   <div class="controls">
     <button onclick="toggleMode()">☀️/🌙</button>
     <button onclick="toggleFormat()">12h/24h</button>
@@ -120,15 +108,12 @@
     <button onclick="toggleFullscreen()">⛶</button>
   </div>
 
-  <div class="digital" id="digitalClock">
-    00:00<span class="am-pm" id="amPm">AM</span>
-  </div>
-  <div class="date" id="date"></div>
-
-  <div class="analog" id="analogClock">
-    <div class="hand" id="hourHand"></div>
-    <div class="hand" id="minuteHand"></div>
-    <div class="hand" id="secondHand"></div>
+  <div class="clock-container">
+    <div class="digital" id="digitalClock">
+      00:00:00 <span id="ampm">AM</span>
+    </div>
+    <div class="date" id="date"></div>
+    <canvas id="analogClock" width="300" height="300"></canvas>
   </div>
 
   <script>
@@ -137,57 +122,105 @@
     function updateClock() {
       const now = new Date();
       let hours = now.getHours();
-      const minutes = now.getMinutes().toString().padStart(2, '0');
-      const seconds = now.getSeconds().toString().padStart(2, '0');
-      let amPm = '';
+      let minutes = now.getMinutes();
+      let seconds = now.getSeconds();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
 
       if (!is24Hour) {
-        amPm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12 || 12;
+        hours = hours % 12;
+        hours = hours ? hours : 12;
       }
 
-      const displayHours = hours.toString().padStart(2, '0');
+      const padded = n => String(n).padStart(2, '0');
+
       document.getElementById('digitalClock').innerHTML =
-        `${displayHours}:${minutes}:${seconds}` +
-        (is24Hour ? '' : `<span class="am-pm">${amPm}</span>`);
+        `${padded(hours)}:${padded(minutes)}:${padded(seconds)} <span id="ampm">${!is24Hour ? ampm : ''}</span>`;
 
       updateDate();
-      updateAnalogClock(now);
+      drawAnalogClock(now);
     }
 
     function updateDate() {
       const now = new Date();
-      const day = now.toLocaleDateString(undefined, { weekday: 'long' });
-      const d = now.getDate().toString().padStart(2, '0');
-      const m = (now.getMonth() + 1).toString().padStart(2, '0');
-      const y = now.getFullYear();
-      const format = document.getElementById('dateFormatSelect').value;
+      const format = document.getElementById("dateFormatSelect").value;
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const weekday = now.toLocaleDateString(undefined, { weekday: 'long' });
 
-      let formatted = '';
-      if (format === 'yyyy/mm/dd') formatted = `${y}/${m}/${d}`;
-      else if (format === 'dd/mm/yyyy') formatted = `${d}/${m}/${y}`;
-      else formatted = `${m}/${d}/${y}`;
+      let dateStr = '';
+      if (format === 'yyyy/mm/dd') {
+        dateStr = `${year}/${month}/${day}`;
+      } else if (format === 'dd/mm/yyyy') {
+        dateStr = `${day}/${month}/${year}`;
+      } else {
+        dateStr = `${month}/${day}/${year}`;
+      }
 
-      document.getElementById('date').textContent = `${day}, ${formatted}`;
+      document.getElementById('date').textContent = `${weekday}, ${dateStr}`;
     }
 
-    function updateAnalogClock(now) {
+    function drawAnalogClock(now) {
+      const canvas = document.getElementById('analogClock');
+      const ctx = canvas.getContext('2d');
+      const radius = canvas.height / 2;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.translate(radius, radius);
+      ctx.beginPath();
+      ctx.arc(0, 0, radius * 0.95, 0, 2 * Math.PI);
+      ctx.strokeStyle = 'currentColor';
+      ctx.lineWidth = 8;
+      ctx.stroke();
+
+      // Hour marks
+      for (let i = 0; i < 12; i++) {
+        const angle = (i * Math.PI) / 6;
+        ctx.rotate(angle);
+        ctx.beginPath();
+        ctx.moveTo(0, -radius * 0.85);
+        ctx.lineTo(0, -radius * 0.75);
+        ctx.stroke();
+        ctx.rotate(-angle);
+      }
+
       const hour = now.getHours() % 12;
       const minute = now.getMinutes();
       const second = now.getSeconds();
 
-      document.getElementById('hourHand').style.transform = `rotate(${(hour + minute / 60) * 30}deg)`;
-      document.getElementById('minuteHand').style.transform = `rotate(${(minute + second / 60) * 6}deg)`;
-      document.getElementById('secondHand').style.transform = `rotate(${second * 6}deg)`;
+      // Hour hand
+      let hourAngle = ((hour + minute / 60) * Math.PI) / 6;
+      drawHand(ctx, hourAngle, radius * 0.5, 6);
+
+      // Minute hand
+      let minuteAngle = ((minute + second / 60) * Math.PI) / 30;
+      drawHand(ctx, minuteAngle, radius * 0.75, 4);
+
+      // Second hand
+      let secondAngle = (second * Math.PI) / 30;
+      drawHand(ctx, secondAngle, radius * 0.85, 2, true);
+
+      ctx.translate(-radius, -radius);
+    }
+
+    function drawHand(ctx, angle, length, width, isSecond = false) {
+      ctx.beginPath();
+      ctx.lineWidth = width;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = isSecond ? "red" : "currentColor";
+      ctx.moveTo(0, 0);
+      ctx.rotate(angle);
+      ctx.lineTo(0, -length);
+      ctx.stroke();
+      ctx.rotate(-angle);
     }
 
     function toggleMode() {
-      document.body.classList.toggle("light-mode");
-      document.body.classList.toggle("dark-mode");
+      document.body.classList.toggle('light-mode');
     }
 
     function toggleFormat() {
       is24Hour = !is24Hour;
+      updateClock();
     }
 
     function toggleFullscreen() {
