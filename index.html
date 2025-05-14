@@ -65,6 +65,7 @@
       background: var(--bg);
       max-width: 90vw;
       max-height: 90vh;
+      position: relative;
     }
 
     .buttons, #exitFullscreenBtn {
@@ -112,15 +113,22 @@
       cursor: none;
     }
 
+    .analog-wrapper {
+      position: relative;
+    }
+
     .analog-date-box {
       position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(80px, -70px);
       background: var(--fg);
       color: var(--bg);
       border: 2px solid var(--accent);
       border-radius: 4px;
       font-size: 1em;
       padding: 4px 8px;
-      transform: translate(160px, -20px);
+      display: none;
     }
 
     @media (max-width: 600px) {
@@ -166,8 +174,10 @@
   </div>
   <div id="date">TUE, 2025/05/13</div>
 
-  <canvas id="clock-analog" width="400" height="400" style="display: none;"></canvas>
-  <div id="analog-date" class="analog-date-box" style="display: none;">WED 14</div>
+  <div class="analog-wrapper" style="display: none;">
+    <canvas id="clock-analog" width="400" height="400"></canvas>
+    <div id="analog-date" class="analog-date-box">WED 14</div>
+  </div>
 
   <script>
     let showingDigital = true;
@@ -175,6 +185,7 @@
     let showDate = false;
 
     const digitalClock = document.getElementById('clock-digital');
+    const analogWrapper = document.querySelector('.analog-wrapper');
     const analogClock = document.getElementById('clock-analog');
     const timeEl = document.getElementById('time');
     const ampmEl = document.getElementById('ampm');
@@ -185,7 +196,7 @@
     function toggleClock() {
       showingDigital = !showingDigital;
       digitalClock.style.display = showingDigital ? 'flex' : 'none';
-      analogClock.style.display = showingDigital ? 'none' : 'block';
+      analogWrapper.style.display = showingDigital ? 'none' : 'block';
       updateDate();
     }
 
