@@ -34,6 +34,7 @@
 
     #clock-digital {
       font-size: 12vw;
+      font-weight: normal;
       display: flex;
       align-items: baseline;
       justify-content: center;
@@ -48,7 +49,7 @@
     }
 
     #date {
-      font-size: 4vw;
+      font-size: 3vw;
       margin-top: 10px;
       opacity: 0.75;
       text-align: center;
@@ -93,13 +94,30 @@
       display: none;
     }
 
+    .fullscreen-active {
+      cursor: none;
+    }
+
+    .analog-date-box {
+      position: absolute;
+      background: var(--fg);
+      color: var(--bg);
+      padding: 4px 10px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      border-radius: 4px;
+      top: 10%;
+      right: 5%;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
     @media (max-width: 600px) {
       #clock-digital {
         font-size: 18vw;
       }
 
       #date {
-        font-size: 5vw;
+        font-size: 4vw;
       }
 
       .buttons {
@@ -133,9 +151,10 @@
     <div id="time">00:00:00</div>
     <div id="ampm">AM</div>
   </div>
-  <div id="date">Tuesday, 2025/05/13</div>
+  <div id="date">Tuesday, 2025/05/14</div>
 
   <canvas id="clock-analog" width="400" height="400" style="display: none;"></canvas>
+  <div id="analog-date" class="analog-date-box" style="display:none;">WED 14</div>
 
   <script>
     let showingDigital = true;
@@ -146,6 +165,7 @@
     const timeEl = document.getElementById('time');
     const ampmEl = document.getElementById('ampm');
     const dateEl = document.getElementById('date');
+    const analogDateBox = document.getElementById('analog-date');
     const ctx = analogClock.getContext('2d');
 
     function toggleClock() {
@@ -153,6 +173,7 @@
       digitalClock.style.display = showingDigital ? 'flex' : 'none';
       dateEl.style.display = showingDigital ? 'block' : 'none';
       analogClock.style.display = showingDigital ? 'none' : 'block';
+      analogDateBox.style.display = showingDigital ? 'none' : 'block';
     }
 
     function toggleFullscreen() {
@@ -184,11 +205,14 @@
         hours = hours ? hours : 12;
       }
 
+      const hourStr = is24Hour ? String(hours).padStart(2, '0') : String(hours);
+
       timeEl.textContent = [
-        String(hours).padStart(2, '0'),
+        hourStr,
         String(minutes).padStart(2, '0'),
         String(seconds).padStart(2, '0')
       ].join(':');
+
       ampmEl.textContent = is24Hour ? '' : ampm;
     }
 
@@ -203,18 +227,13 @@
 
       let dateString = '';
       switch (format) {
-        case 'YYYY/MM/DD':
-          dateString = `${yyyy}/${mm}/${dd}`;
-          break;
-        case 'DD/MM/YYYY':
-          dateString = `${dd}/${mm}/${yyyy}`;
-          break;
-        case 'MM/DD/YYYY':
-          dateString = `${mm}/${dd}/${yyyy}`;
-          break;
+        case 'YYYY/MM/DD': dateString = `${yyyy}/${mm}/${dd}`; break;
+        case 'DD/MM/YYYY': dateString = `${dd}/${mm}/${yyyy}`; break;
+        case 'MM/DD/YYYY': dateString = `${mm}/${dd}/${yyyy}`; break;
       }
 
       dateEl.textContent = `${weekday}, ${dateString}`;
+      analogDateBox.textContent = `${weekday.substring(0,3).toUpperCase()} ${dd}`;
     }
 
     function drawAnalogClock() {
@@ -227,14 +246,12 @@
       ctx.clearRect(0, 0, analogClock.width, analogClock.height);
       ctx.translate(radius, radius);
 
-      // border
       ctx.beginPath();
       ctx.arc(0, 0, radius - 5, 0, 2 * Math.PI);
       ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--accent');
       ctx.lineWidth = 4;
       ctx.stroke();
 
-      // ticks
       for (let i = 0; i < 60; i++) {
         const angle = (i * Math.PI) / 30;
         const len = i % 5 === 0 ? 10 : 4;
@@ -278,15 +295,11 @@
     }
 
     document.addEventListener("fullscreenchange", () => {
-      if (document.fullscreenElement) {
-        document.body.classList.add('fullscreen-active');
-      } else {
-        document.body.classList.remove('fullscreen-active');
-      }
+      document.body.classList.toggle('fullscreen-active', !!document.fullscreenElement);
     });
 
-    toggleClock(); // hide analog
-    toggleClock(); // show digital
+    toggleClock();
+    toggleClock();
     loop();
   </script>
 
