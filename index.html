@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Clocky - Fullscreen Online Clock</title>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
@@ -49,7 +49,7 @@
     }
 
     #date {
-      font-size: 3vw;
+      font-size: 3.5vw;
       margin-top: 10px;
       opacity: 0.75;
       text-align: center;
@@ -94,21 +94,16 @@
       display: none;
     }
 
-    .fullscreen-active {
+    .fullscreen-active body {
       cursor: none;
     }
 
-    .analog-date-box {
-      position: absolute;
-      background: var(--fg);
-      color: var(--bg);
-      padding: 4px 10px;
-      font-size: 1.2rem;
-      font-weight: bold;
-      border-radius: 4px;
-      top: 10%;
-      right: 5%;
-      font-family: 'Share Tech Mono', monospace;
+    #ads {
+      margin: 20px 0;
+    }
+
+    .fullscreen-active #ads {
+      display: none;
     }
 
     @media (max-width: 600px) {
@@ -117,7 +112,7 @@
       }
 
       #date {
-        font-size: 4vw;
+        font-size: 5vw;
       }
 
       .buttons {
@@ -134,7 +129,6 @@
   </style>
 </head>
 <body>
-
   <div class="buttons">
     <button onclick="toggleClock()">Analog/Digital</button>
     <button onclick="toggleFullscreen()">Fullscreen</button>
@@ -147,14 +141,18 @@
     </select>
   </div>
 
+  <div id="ads">
+    <!-- Example placeholder for AdSense -->
+    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-xxxxxxxxxxxxxxxx" data-ad-slot="1234567890" data-ad-format="auto"></ins>
+  </div>
+
   <div id="clock-digital">
     <div id="time">00:00:00</div>
     <div id="ampm">AM</div>
   </div>
-  <div id="date">Tuesday, 2025/05/14</div>
+  <div id="date">Tuesday, 2025/05/13</div>
 
   <canvas id="clock-analog" width="400" height="400" style="display: none;"></canvas>
-  <div id="analog-date" class="analog-date-box" style="display:none;">WED 14</div>
 
   <script>
     let showingDigital = true;
@@ -165,7 +163,6 @@
     const timeEl = document.getElementById('time');
     const ampmEl = document.getElementById('ampm');
     const dateEl = document.getElementById('date');
-    const analogDateBox = document.getElementById('analog-date');
     const ctx = analogClock.getContext('2d');
 
     function toggleClock() {
@@ -173,7 +170,6 @@
       digitalClock.style.display = showingDigital ? 'flex' : 'none';
       dateEl.style.display = showingDigital ? 'block' : 'none';
       analogClock.style.display = showingDigital ? 'none' : 'block';
-      analogDateBox.style.display = showingDigital ? 'none' : 'block';
     }
 
     function toggleFullscreen() {
@@ -205,14 +201,11 @@
         hours = hours ? hours : 12;
       }
 
-      const hourStr = is24Hour ? String(hours).padStart(2, '0') : String(hours);
-
       timeEl.textContent = [
-        hourStr,
+        is24Hour ? String(hours).padStart(2, '0') : String(hours),
         String(minutes).padStart(2, '0'),
         String(seconds).padStart(2, '0')
       ].join(':');
-
       ampmEl.textContent = is24Hour ? '' : ampm;
     }
 
@@ -227,13 +220,18 @@
 
       let dateString = '';
       switch (format) {
-        case 'YYYY/MM/DD': dateString = `${yyyy}/${mm}/${dd}`; break;
-        case 'DD/MM/YYYY': dateString = `${dd}/${mm}/${yyyy}`; break;
-        case 'MM/DD/YYYY': dateString = `${mm}/${dd}/${yyyy}`; break;
+        case 'YYYY/MM/DD':
+          dateString = `${yyyy}/${mm}/${dd}`;
+          break;
+        case 'DD/MM/YYYY':
+          dateString = `${dd}/${mm}/${yyyy}`;
+          break;
+        case 'MM/DD/YYYY':
+          dateString = `${mm}/${dd}/${yyyy}`;
+          break;
       }
 
       dateEl.textContent = `${weekday}, ${dateString}`;
-      analogDateBox.textContent = `${weekday.substring(0,3).toUpperCase()} ${dd}`;
     }
 
     function drawAnalogClock() {
@@ -246,12 +244,14 @@
       ctx.clearRect(0, 0, analogClock.width, analogClock.height);
       ctx.translate(radius, radius);
 
+      // clock border
       ctx.beginPath();
       ctx.arc(0, 0, radius - 5, 0, 2 * Math.PI);
       ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--accent');
       ctx.lineWidth = 4;
       ctx.stroke();
 
+      // ticks
       for (let i = 0; i < 60; i++) {
         const angle = (i * Math.PI) / 30;
         const len = i % 5 === 0 ? 10 : 4;
@@ -271,6 +271,23 @@
       drawHand((hour + minute / 60) * Math.PI / 6, radius * 0.5, 5);
       drawHand((minute + second / 60) * Math.PI / 30, radius * 0.7, 3);
       drawHand(second * Math.PI / 30, radius * 0.8, 2, 'red');
+
+      // draw date box (e.g., WED 14)
+      const day = now.toLocaleDateString(undefined, { weekday: 'short' });
+      const dateNum = String(now.getDate());
+      const dateLabel = `${day} ${dateNum}`;
+
+      ctx.font = `${canvasSize * 0.05}px 'Share Tech Mono'`;
+      ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--fg');
+      ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--accent');
+      ctx.lineWidth = 2;
+      const textWidth = ctx.measureText(dateLabel).width;
+
+      const boxX = -textWidth / 2;
+      const boxY = radius * 0.4;
+
+      ctx.strokeRect(boxX - 8, boxY - 30, textWidth + 16, 36);
+      ctx.fillText(dateLabel, boxX, boxY);
 
       ctx.restore();
     }
@@ -295,13 +312,16 @@
     }
 
     document.addEventListener("fullscreenchange", () => {
-      document.body.classList.toggle('fullscreen-active', !!document.fullscreenElement);
+      if (document.fullscreenElement) {
+        document.body.classList.add('fullscreen-active');
+      } else {
+        document.body.classList.remove('fullscreen-active');
+      }
     });
 
     toggleClock();
     toggleClock();
     loop();
   </script>
-
 </body>
 </html>
