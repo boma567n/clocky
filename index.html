@@ -18,8 +18,13 @@
       --accent: #0077cc;
     }
 
-    body {
+    html, body {
       margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    body {
       font-family: 'Share Tech Mono', monospace;
       background-color: var(--bg);
       color: var(--fg);
@@ -27,13 +32,9 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
+      height: 100vh;
       transition: background-color 0.3s, color 0.3s;
-      overflow: hidden;
-    }
-
-    body.fullscreen {
-      cursor: none;
+      padding: 20px;
     }
 
     #clock-digital {
@@ -53,9 +54,9 @@
     }
 
     #date {
-      font-size: 2.5vw;
+      font-size: 3vw;
       margin-top: 5px;
-      opacity: 0.7;
+      opacity: 0.75;
       text-align: center;
       display: none;
     }
@@ -66,7 +67,7 @@
       max-height: 90vh;
     }
 
-    .buttons {
+    .buttons, #exitFullscreenBtn {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
@@ -95,77 +96,90 @@
       background: var(--bg);
     }
 
+    #exitFullscreenBtn {
+      display: none;
+    }
+
     .fullscreen-active .buttons {
       display: none;
     }
 
-    #analog-date-box {
+    .fullscreen-active #exitFullscreenBtn {
+      display: none;
+    }
+
+    .fullscreen-active {
+      cursor: none;
+    }
+
+    .analog-date-box {
       position: absolute;
       background: var(--fg);
       color: var(--bg);
-      padding: 4px 8px;
+      border: 2px solid var(--accent);
       border-radius: 4px;
-      font-size: 1.5vw;
-      font-weight: bold;
-      pointer-events: none;
+      font-size: 1em;
+      padding: 4px 8px;
+      transform: translate(160px, -20px);
     }
 
     @media (max-width: 600px) {
       #clock-digital {
         font-size: 18vw;
       }
+
       #date {
         font-size: 5vw;
       }
-      .buttons {
+
+      .buttons, #exitFullscreenBtn {
         flex-direction: column;
         align-items: center;
       }
+
       button, select {
         font-size: 16px;
         width: 90%;
         max-width: 300px;
       }
-      #analog-date-box {
-        font-size: 3vw;
-      }
     }
   </style>
 </head>
 <body>
+
   <div class="buttons">
     <button onclick="toggleClock()">Analog/Digital</button>
-    <button onclick="toggleFullscreen()">Fullscreen</button>
     <button onclick="toggleTheme()">Light/Dark</button>
     <button onclick="toggleHourFormat()">12/24 Hour</button>
-    <button onclick="toggleDateDisplay()">Toggle Date</button>
+    <button onclick="toggleDateVisibility()">Day & Date</button>
     <select id="dateFormatSelect" onchange="updateDate()">
       <option value="YYYY/MM/DD">YYYY/MM/DD</option>
       <option value="DD/MM/YYYY">DD/MM/YYYY</option>
       <option value="MM/DD/YYYY">MM/DD/YYYY</option>
     </select>
+    <button onclick="toggleFullscreen()">Fullscreen</button>
   </div>
 
   <div id="clock-digital">
     <div id="time">00:00:00</div>
     <div id="ampm">AM</div>
   </div>
-  <div id="date">Tuesday, 2025/05/13</div>
+  <div id="date">TUE, 2025/05/13</div>
 
   <canvas id="clock-analog" width="400" height="400" style="display: none;"></canvas>
-  <div id="analog-date-box" style="display: none;">WED 14</div>
+  <div id="analog-date" class="analog-date-box" style="display: none;">WED 14</div>
 
   <script>
     let showingDigital = true;
     let is24Hour = false;
-    let showDate = true;
+    let showDate = false;
 
     const digitalClock = document.getElementById('clock-digital');
     const analogClock = document.getElementById('clock-analog');
     const timeEl = document.getElementById('time');
     const ampmEl = document.getElementById('ampm');
     const dateEl = document.getElementById('date');
-    const dateBox = document.getElementById('analog-date-box');
+    const analogDateBox = document.getElementById('analog-date');
     const ctx = analogClock.getContext('2d');
 
     function toggleClock() {
@@ -191,7 +205,7 @@
       is24Hour = !is24Hour;
     }
 
-    function toggleDateDisplay() {
+    function toggleDateVisibility() {
       showDate = !showDate;
       updateDate();
     }
@@ -210,7 +224,7 @@
       }
 
       timeEl.textContent = [
-        is24Hour ? String(hours).padStart(2, '0') : String(hours),
+        is24Hour ? String(hours).padStart(2, '0') : hours,
         String(minutes).padStart(2, '0'),
         String(seconds).padStart(2, '0')
       ].join(':');
@@ -224,27 +238,33 @@
       const yyyy = now.getFullYear();
       const mm = String(now.getMonth() + 1).padStart(2, '0');
       const dd = String(now.getDate()).padStart(2, '0');
-      const weekday = now.toLocaleDateString(undefined, { weekday: 'long' });
-      const shortDay = weekday.substring(0, 3).toUpperCase();
+      const day = ['SUN','MON','TUE','WED','THU','FRI','SAT'][now.getDay()];
 
       let dateString = '';
       switch (format) {
-        case 'YYYY/MM/DD': dateString = `${yyyy}/${mm}/${dd}`; break;
-        case 'DD/MM/YYYY': dateString = `${dd}/${mm}/${yyyy}`; break;
-        case 'MM/DD/YYYY': dateString = `${mm}/${dd}/${yyyy}`; break;
+        case 'YYYY/MM/DD':
+          dateString = `${yyyy}/${mm}/${dd}`;
+          break;
+        case 'DD/MM/YYYY':
+          dateString = `${dd}/${mm}/${yyyy}`;
+          break;
+        case 'MM/DD/YYYY':
+          dateString = `${mm}/${dd}/${yyyy}`;
+          break;
       }
 
-      dateEl.textContent = `${weekday}, ${dateString}`;
-      dateEl.style.display = showingDigital && showDate ? 'block' : 'none';
+      if (showingDigital && showDate) {
+        dateEl.style.display = 'block';
+        dateEl.textContent = `${day}, ${dateString}`;
+      } else {
+        dateEl.style.display = 'none';
+      }
 
       if (!showingDigital && showDate) {
-        dateBox.textContent = `${shortDay} ${parseInt(dd)}`;
-        dateBox.style.display = 'block';
-        const rect = analogClock.getBoundingClientRect();
-        dateBox.style.top = `${rect.top + rect.height * 0.7}px`;
-        dateBox.style.left = `${rect.left + rect.width * 0.7}px`;
+        analogDateBox.style.display = 'block';
+        analogDateBox.textContent = `${day} ${dd}`;
       } else {
-        dateBox.style.display = 'none';
+        analogDateBox.style.display = 'none';
       }
     }
 
@@ -307,13 +327,17 @@
     }
 
     document.addEventListener("fullscreenchange", () => {
-      document.body.classList.toggle('fullscreen', document.fullscreenElement);
-      document.body.classList.toggle('fullscreen-active', document.fullscreenElement);
+      if (document.fullscreenElement) {
+        document.body.classList.add('fullscreen-active');
+      } else {
+        document.body.classList.remove('fullscreen-active');
+      }
     });
 
     toggleClock();
     toggleClock();
     loop();
   </script>
+
 </body>
 </html>
