@@ -64,9 +64,9 @@
     canvas {
       background: var(--bg);
       width: 100%;
-      height: 100%;
-      max-width: 90vw;
-      max-height: 90vh;
+      height: auto;
+      max-width: 80vw;
+      max-height: 80vh;
       position: relative;
     }
 
@@ -103,18 +103,6 @@
       display: none;
     }
 
-    .fullscreen-active .buttons {
-      display: none;
-    }
-
-    .fullscreen-active #exitFullscreenBtn {
-      display: none;
-    }
-
-    .fullscreen-active {
-      cursor: none;
-    }
-
     .analog-wrapper {
       position: relative;
       width: 100%;
@@ -126,7 +114,7 @@
     .analog-date-box {
       position: absolute;
       top: 50%;
-      left: 70%;
+      left: 60%;
       transform: translate(-50%, -50%);
       background: var(--fg);
       color: var(--bg);
@@ -166,7 +154,7 @@
   </style>
 </head>
 <body>
-  <div class="buttons">
+  <div class="buttons" id="controlButtons">
     <button onclick="toggleClock()">Analog/Digital</button>
     <button onclick="toggleTheme()">Light/Dark</button>
     <button onclick="toggleHourFormat()">12/24 Hour</button>
@@ -198,6 +186,7 @@
     const digitalClock = document.getElementById("clock-digital");
     const analogDate = document.getElementById("analog-date");
     const dateFormatSelect = document.getElementById("dateFormatSelect");
+    const controlButtons = document.getElementById("controlButtons");
     let isAnalog = false;
     let is24Hour = false;
     let showDate = false;
@@ -309,10 +298,11 @@
       if (!document.fullscreenElement) {
         elem.requestFullscreen();
         document.body.classList.add("fullscreen-active");
+        controlButtons.style.display = "none";
       } else {
         document.exitFullscreen();
         document.body.classList.remove("fullscreen-active");
-        document.querySelector('.buttons').style.display = 'flex';
+        controlButtons.style.display = "flex";
       }
     }
 
