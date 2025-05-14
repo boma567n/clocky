@@ -34,7 +34,6 @@
 
     #clock-digital {
       font-size: 12vw;
-      font-weight: normal;
       display: flex;
       align-items: baseline;
       justify-content: center;
@@ -61,7 +60,7 @@
       max-height: 90vh;
     }
 
-    .buttons, #exitFullscreenBtn {
+    .buttons {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
@@ -90,17 +89,8 @@
       background: var(--bg);
     }
 
-    #exitFullscreenBtn {
-      display: none;
-    }
-
     .fullscreen-active .buttons {
       display: none;
-    }
-
-    .fullscreen-active #exitFullscreenBtn {
-      display: flex;
-      margin-top: 10px;
     }
 
     @media (max-width: 600px) {
@@ -112,7 +102,7 @@
         font-size: 5vw;
       }
 
-      .buttons, #exitFullscreenBtn {
+      .buttons {
         flex-direction: column;
         align-items: center;
       }
@@ -137,10 +127,6 @@
       <option value="DD/MM/YYYY">DD/MM/YYYY</option>
       <option value="MM/DD/YYYY">MM/DD/YYYY</option>
     </select>
-  </div>
-
-  <div id="exitFullscreenBtn">
-    <button onclick="exitFullscreen()">Exit Fullscreen</button>
   </div>
 
   <div id="clock-digital">
@@ -175,10 +161,6 @@
       } else {
         document.exitFullscreen();
       }
-    }
-
-    function exitFullscreen() {
-      document.exitFullscreen();
     }
 
     function toggleTheme() {
@@ -295,7 +277,6 @@
       requestAnimationFrame(loop);
     }
 
-    // Fullscreen toggle UI
     document.addEventListener("fullscreenchange", () => {
       if (document.fullscreenElement) {
         document.body.classList.add('fullscreen-active');
@@ -304,8 +285,8 @@
       }
     });
 
-    toggleClock(); // init analog hidden
-    toggleClock(); // reset to digital
+    toggleClock(); // hide analog
+    toggleClock(); // show digital
     loop();
   </script>
 
