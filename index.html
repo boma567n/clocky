@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Clocky - Fullscreen Online Clock</title>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
@@ -29,7 +29,11 @@
       justify-content: center;
       min-height: 100vh;
       transition: background-color 0.3s, color 0.3s;
-      padding: 20px;
+      overflow: hidden;
+    }
+
+    body.fullscreen {
+      cursor: none;
     }
 
     #clock-digital {
@@ -49,10 +53,11 @@
     }
 
     #date {
-      font-size: 3.5vw;
-      margin-top: 10px;
-      opacity: 0.75;
+      font-size: 2.5vw;
+      margin-top: 5px;
+      opacity: 0.7;
       text-align: center;
+      display: none;
     }
 
     canvas {
@@ -94,36 +99,35 @@
       display: none;
     }
 
-    .fullscreen-active body {
-      cursor: none;
-    }
-
-    #ads {
-      margin: 20px 0;
-    }
-
-    .fullscreen-active #ads {
-      display: none;
+    #analog-date-box {
+      position: absolute;
+      background: var(--fg);
+      color: var(--bg);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 1.5vw;
+      font-weight: bold;
+      pointer-events: none;
     }
 
     @media (max-width: 600px) {
       #clock-digital {
         font-size: 18vw;
       }
-
       #date {
         font-size: 5vw;
       }
-
       .buttons {
         flex-direction: column;
         align-items: center;
       }
-
       button, select {
         font-size: 16px;
         width: 90%;
         max-width: 300px;
+      }
+      #analog-date-box {
+        font-size: 3vw;
       }
     }
   </style>
@@ -134,16 +138,12 @@
     <button onclick="toggleFullscreen()">Fullscreen</button>
     <button onclick="toggleTheme()">Light/Dark</button>
     <button onclick="toggleHourFormat()">12/24 Hour</button>
+    <button onclick="toggleDateDisplay()">Toggle Date</button>
     <select id="dateFormatSelect" onchange="updateDate()">
       <option value="YYYY/MM/DD">YYYY/MM/DD</option>
       <option value="DD/MM/YYYY">DD/MM/YYYY</option>
       <option value="MM/DD/YYYY">MM/DD/YYYY</option>
     </select>
-  </div>
-
-  <div id="ads">
-    <!-- Example placeholder for AdSense -->
-    <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-xxxxxxxxxxxxxxxx" data-ad-slot="1234567890" data-ad-format="auto"></ins>
   </div>
 
   <div id="clock-digital">
@@ -153,23 +153,26 @@
   <div id="date">Tuesday, 2025/05/13</div>
 
   <canvas id="clock-analog" width="400" height="400" style="display: none;"></canvas>
+  <div id="analog-date-box" style="display: none;">WED 14</div>
 
   <script>
     let showingDigital = true;
     let is24Hour = false;
+    let showDate = true;
 
     const digitalClock = document.getElementById('clock-digital');
     const analogClock = document.getElementById('clock-analog');
     const timeEl = document.getElementById('time');
     const ampmEl = document.getElementById('ampm');
     const dateEl = document.getElementById('date');
+    const dateBox = document.getElementById('analog-date-box');
     const ctx = analogClock.getContext('2d');
 
     function toggleClock() {
       showingDigital = !showingDigital;
       digitalClock.style.display = showingDigital ? 'flex' : 'none';
-      dateEl.style.display = showingDigital ? 'block' : 'none';
       analogClock.style.display = showingDigital ? 'none' : 'block';
+      updateDate();
     }
 
     function toggleFullscreen() {
@@ -186,6 +189,11 @@
 
     function toggleHourFormat() {
       is24Hour = !is24Hour;
+    }
+
+    function toggleDateDisplay() {
+      showDate = !showDate;
+      updateDate();
     }
 
     function updateDigitalClock() {
@@ -217,21 +225,27 @@
       const mm = String(now.getMonth() + 1).padStart(2, '0');
       const dd = String(now.getDate()).padStart(2, '0');
       const weekday = now.toLocaleDateString(undefined, { weekday: 'long' });
+      const shortDay = weekday.substring(0, 3).toUpperCase();
 
       let dateString = '';
       switch (format) {
-        case 'YYYY/MM/DD':
-          dateString = `${yyyy}/${mm}/${dd}`;
-          break;
-        case 'DD/MM/YYYY':
-          dateString = `${dd}/${mm}/${yyyy}`;
-          break;
-        case 'MM/DD/YYYY':
-          dateString = `${mm}/${dd}/${yyyy}`;
-          break;
+        case 'YYYY/MM/DD': dateString = `${yyyy}/${mm}/${dd}`; break;
+        case 'DD/MM/YYYY': dateString = `${dd}/${mm}/${yyyy}`; break;
+        case 'MM/DD/YYYY': dateString = `${mm}/${dd}/${yyyy}`; break;
       }
 
       dateEl.textContent = `${weekday}, ${dateString}`;
+      dateEl.style.display = showingDigital && showDate ? 'block' : 'none';
+
+      if (!showingDigital && showDate) {
+        dateBox.textContent = `${shortDay} ${parseInt(dd)}`;
+        dateBox.style.display = 'block';
+        const rect = analogClock.getBoundingClientRect();
+        dateBox.style.top = `${rect.top + rect.height * 0.7}px`;
+        dateBox.style.left = `${rect.left + rect.width * 0.7}px`;
+      } else {
+        dateBox.style.display = 'none';
+      }
     }
 
     function drawAnalogClock() {
@@ -244,14 +258,12 @@
       ctx.clearRect(0, 0, analogClock.width, analogClock.height);
       ctx.translate(radius, radius);
 
-      // clock border
       ctx.beginPath();
       ctx.arc(0, 0, radius - 5, 0, 2 * Math.PI);
       ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--accent');
       ctx.lineWidth = 4;
       ctx.stroke();
 
-      // ticks
       for (let i = 0; i < 60; i++) {
         const angle = (i * Math.PI) / 30;
         const len = i % 5 === 0 ? 10 : 4;
@@ -271,23 +283,6 @@
       drawHand((hour + minute / 60) * Math.PI / 6, radius * 0.5, 5);
       drawHand((minute + second / 60) * Math.PI / 30, radius * 0.7, 3);
       drawHand(second * Math.PI / 30, radius * 0.8, 2, 'red');
-
-      // draw date box (e.g., WED 14)
-      const day = now.toLocaleDateString(undefined, { weekday: 'short' });
-      const dateNum = String(now.getDate());
-      const dateLabel = `${day} ${dateNum}`;
-
-      ctx.font = `${canvasSize * 0.05}px 'Share Tech Mono'`;
-      ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--fg');
-      ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--accent');
-      ctx.lineWidth = 2;
-      const textWidth = ctx.measureText(dateLabel).width;
-
-      const boxX = -textWidth / 2;
-      const boxY = radius * 0.4;
-
-      ctx.strokeRect(boxX - 8, boxY - 30, textWidth + 16, 36);
-      ctx.fillText(dateLabel, boxX, boxY);
 
       ctx.restore();
     }
@@ -312,11 +307,8 @@
     }
 
     document.addEventListener("fullscreenchange", () => {
-      if (document.fullscreenElement) {
-        document.body.classList.add('fullscreen-active');
-      } else {
-        document.body.classList.remove('fullscreen-active');
-      }
+      document.body.classList.toggle('fullscreen', document.fullscreenElement);
+      document.body.classList.toggle('fullscreen-active', document.fullscreenElement);
     });
 
     toggleClock();
