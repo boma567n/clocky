@@ -120,8 +120,8 @@
     .analog-date-box {
       position: absolute;
       top: 50%;
-      left: 50%;
-      transform: translate(115px, -40px);
+      left: 85%;
+      transform: translate(-50%, -50%);
       background: var(--fg);
       color: var(--bg);
       border: 2px solid var(--accent);
@@ -157,7 +157,6 @@
   </style>
 </head>
 <body>
-
   <div class="buttons">
     <button onclick="toggleClock()">Analog/Digital</button>
     <button onclick="toggleTheme()">Light/Dark</button>
@@ -183,8 +182,130 @@
   </div>
 
   <script>
-    // JavaScript will be reattached in the next step
-  </script>
+    const timeEl = document.getElementById("time");
+    const ampmEl = document.getElementById("ampm");
+    const dateEl = document.getElementById("date");
+    const analogWrapper = document.querySelector(".analog-wrapper");
+    const digitalClock = document.getElementById("clock-digital");
+    const analogDate = document.getElementById("analog-date");
+    const dateFormatSelect = document.getElementById("dateFormatSelect");
+    let isAnalog = false;
+    let is24Hour = false;
+    let showDate = false;
 
+    function padZero(n) {
+      return n < 10 ? "0" + n : n;
+    }
+
+    function updateTime() {
+      const now = new Date();
+      const hrs24 = now.getHours();
+      const hrs = is24Hour ? hrs24 : ((hrs24 % 12) || 12);
+      const mins = now.getMinutes();
+      const secs = now.getSeconds();
+
+      const ampm = hrs24 >= 12 ? "PM" : "AM";
+      timeEl.textContent = `${is24Hour ? padZero(hrs) : hrs}:${padZero(mins)}:${padZero(secs)}`;
+      ampmEl.textContent = is24Hour ? "" : ampm;
+
+      const weekday = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][now.getDay()];
+      const day = padZero(now.getDate());
+      const month = padZero(now.getMonth() + 1);
+      const year = now.getFullYear();
+      const format = dateFormatSelect.value;
+
+      let formattedDate = `${weekday}, ${year}/${month}/${day}`;
+      if (format === "DD/MM/YYYY") formattedDate = `${weekday}, ${day}/${month}/${year}`;
+      if (format === "MM/DD/YYYY") formattedDate = `${weekday}, ${month}/${day}/${year}`;
+
+      dateEl.textContent = formattedDate;
+      analogDate.textContent = `${weekday} ${day}`;
+    }
+
+    function drawAnalogClock() {
+      const now = new Date();
+      const canvas = document.getElementById("clock-analog");
+      const ctx = canvas.getContext("2d");
+      const radius = canvas.height / 2;
+      ctx.translate(radius, radius);
+      ctx.clearRect(-radius, -radius, canvas.width, canvas.height);
+
+      ctx.beginPath();
+      ctx.arc(0, 0, radius * 0.95, 0, 2 * Math.PI);
+      ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--accent');
+      ctx.lineWidth = 6;
+      ctx.stroke();
+
+      const hour = now.getHours();
+      const minute = now.getMinutes();
+      const second = now.getSeconds();
+
+      function drawHand(pos, length, width) {
+        ctx.beginPath();
+        ctx.lineWidth = width;
+        ctx.lineCap = "round";
+        ctx.moveTo(0, 0);
+        ctx.rotate(pos);
+        ctx.lineTo(0, -length);
+        ctx.stroke();
+        ctx.rotate(-pos);
+      }
+
+      ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--fg');
+
+      drawHand(((hour % 12) + minute / 60) * Math.PI / 6, radius * 0.5, 6);
+      drawHand((minute + second / 60) * Math.PI / 30, radius * 0.8, 4);
+      drawHand(second * Math.PI / 30, radius * 0.9, 2);
+
+      ctx.translate(-radius, -radius);
+    }
+
+    function updateClock() {
+      updateTime();
+      if (isAnalog) drawAnalogClock();
+    }
+
+    setInterval(updateClock, 1000);
+
+    function toggleClock() {
+      isAnalog = !isAnalog;
+      analogWrapper.style.display = isAnalog ? "block" : "none";
+      digitalClock.style.display = isAnalog ? "none" : "flex";
+      analogDate.style.display = isAnalog && showDate ? "block" : "none";
+      dateEl.style.display = !isAnalog && showDate ? "block" : "none";
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle("light");
+    }
+
+    function toggleHourFormat() {
+      is24Hour = !is24Hour;
+      updateClock();
+    }
+
+    function toggleDateVisibility() {
+      showDate = !showDate;
+      dateEl.style.display = !isAnalog && showDate ? "block" : "none";
+      analogDate.style.display = isAnalog && showDate ? "block" : "none";
+    }
+
+    function updateDate() {
+      updateClock();
+    }
+
+    function toggleFullscreen() {
+      const elem = document.documentElement;
+      if (!document.fullscreenElement) {
+        elem.requestFullscreen();
+        document.body.classList.add("fullscreen-active");
+      } else {
+        document.exitFullscreen();
+        document.body.classList.remove("fullscreen-active");
+      }
+    }
+
+    updateClock();
+  </script>
 </body>
 </html>
