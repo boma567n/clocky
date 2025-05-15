@@ -70,7 +70,7 @@
       position: relative;
     }
 
-    .buttons, #exitFullscreenBtn {
+    .buttons {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
@@ -99,10 +99,6 @@
       background: var(--bg);
     }
 
-    #exitFullscreenBtn {
-      display: none;
-    }
-
     .analog-wrapper {
       position: relative;
       width: 100%;
@@ -113,8 +109,8 @@
 
     .analog-date-box {
       position: absolute;
-      top: 50%;
-      left: 60%;
+      top: 55%;
+      left: 62%;
       transform: translate(-50%, -50%);
       background: var(--fg);
       color: var(--bg);
@@ -140,7 +136,7 @@
         font-size: 5vw;
       }
 
-      .buttons, #exitFullscreenBtn {
+      .buttons {
         flex-direction: column;
         align-items: center;
       }
@@ -150,6 +146,10 @@
         width: 90%;
         max-width: 300px;
       }
+    }
+
+    body.fullscreen-active .buttons {
+      display: none;
     }
   </style>
 </head>
@@ -298,11 +298,9 @@
       if (!document.fullscreenElement) {
         elem.requestFullscreen();
         document.body.classList.add("fullscreen-active");
-        controlButtons.style.display = "none";
       } else {
         document.exitFullscreen();
         document.body.classList.remove("fullscreen-active");
-        controlButtons.style.display = "flex";
       }
     }
 
