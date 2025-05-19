@@ -2,80 +2,83 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Clocky - Fullscreen Online Clock</title>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #000;
-      --fg: #00f0ff;
-      --accent: #00f0ff;
-    }
-
-    body.light {
-      --bg: #fff;
-      --fg: #111;
-      --accent: #0077cc;
+      --fg: #ffffff;
+      --accent: #ffffff;
     }
 
     html, body {
       margin: 0;
       padding: 0;
       overflow: hidden;
-      height: 100%;
-    }
-
-    body {
-      font-family: 'Share Tech Mono', monospace;
       background-color: var(--bg);
       color: var(--fg);
+      font-family: 'Share Tech Mono', monospace;
       display: flex;
       flex-direction: column;
-      align-items: center;
       justify-content: center;
-      transition: background-color 0.3s, color 0.3s;
+      align-items: center;
+      height: 100vh;
     }
 
     #clock-digital {
       font-size: 12vw;
-      font-weight: normal;
-      display: flex;
-      align-items: baseline;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    #ampm {
-      font-size: 0.25em;
-      margin-left: 8px;
-      opacity: 0.6;
-    }
-
-    #date {
-      font-size: 1.2vw;
-      margin-top: 5px;
-      opacity: 0.75;
       text-align: center;
       display: none;
     }
 
+    #date {
+      font-size: 2vw;
+      margin-top: 10px;
+      opacity: 0.8;
+      display: none;
+    }
+
     canvas {
-      background: var(--bg);
-      max-width: 40vw;
-      max-height: 40vh;
+      position: relative;
+      width: 40vmin;
+      height: 40vmin;
     }
 
     body.fullscreen-active canvas {
-      max-width: 55vw;
-      max-height: 55vh;
+      width: 60vmin;
+      height: 60vmin;
+    }
+
+    .analog-wrapper {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .analog-date-box {
+      position: absolute;
+      top: 48%;
+      left: 68%;
+      transform: translate(-50%, -50%);
+      background: var(--fg);
+      color: var(--bg);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 0.8vw;
+      font-weight: bold;
+      display: none;
     }
 
     .buttons {
+      position: absolute;
+      top: 20px;
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 10px;
-      margin: 20px;
+      z-index: 10;
     }
 
     button, select {
@@ -86,40 +89,11 @@
       font-size: 14px;
       cursor: pointer;
       border-radius: 4px;
-      min-width: 100px;
     }
 
     button:hover, select:hover {
       background: var(--accent);
       color: var(--bg);
-    }
-
-    select {
-      background: var(--bg);
-    }
-
-    .analog-wrapper {
-      position: relative;
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .analog-date-box {
-      position: absolute;
-      top: 46%;
-      left: 68%;
-      transform: translate(-50%, -50%);
-      background: var(--fg);
-      color: var(--bg);
-      border: 2px solid var(--accent);
-      border-radius: 4px;
-      font-size: 0.9em;
-      padding: 2px 6px;
-      font-weight: bold;
-      white-space: nowrap;
-      display: none;
     }
 
     body.fullscreen-active {
@@ -129,130 +103,126 @@
 </head>
 <body>
   <div class="buttons">
-    <button id="toggle-theme">Theme</button>
-    <button id="toggle-mode">Analog / Digital</button>
+    <button id="toggle-format">12/24 Hour</button>
+    <button id="toggle-mode">Analog/Digital</button>
     <button id="toggle-date">Show Date</button>
-    <button id="fullscreen">Fullscreen</button>
+    <button id="toggle-fullscreen">Fullscreen</button>
   </div>
-  <div id="clock-digital" style="display: none;"><span id="time-digital"></span><span id="ampm"></span></div>
+
+  <div id="clock-digital"></div>
   <div id="date"></div>
-  <div class="analog-wrapper" style="display: none;">
-    <canvas id="analog-clock" width="400" height="400"></canvas>
+
+  <div class="analog-wrapper">
+    <canvas id="clock-analog"></canvas>
     <div class="analog-date-box" id="analog-date-box"></div>
   </div>
+
   <script>
-    const timeDigital = document.getElementById("time-digital");
-    const ampm = document.getElementById("ampm");
-    const dateText = document.getElementById("date");
-    const analogCanvas = document.getElementById("analog-clock");
-    const analogWrapper = document.querySelector(".analog-wrapper");
-    const digitalClock = document.getElementById("clock-digital");
-    const analogDateBox = document.getElementById("analog-date-box");
-    const ctx = analogCanvas.getContext("2d");
+    const digitalClock = document.getElementById('clock-digital');
+    const analogClock = document.getElementById('clock-analog');
+    const dateEl = document.getElementById('date');
+    const analogDateBox = document.getElementById('analog-date-box');
 
-    let isAnalog = false;
+    const ctx = analogClock.getContext('2d');
+
+    let showAnalog = true;
     let showDate = false;
-    let isDark = true;
+    let use24Hour = false;
 
-    function updateDigitalClock() {
+    function updateTime() {
       const now = new Date();
       let hours = now.getHours();
       const minutes = now.getMinutes().toString().padStart(2, '0');
       const seconds = now.getSeconds().toString().padStart(2, '0');
-      const amPmText = hours >= 12 ? "PM" : "AM";
-      if (hours === 0) hours = 12;
-      else if (hours > 12) hours -= 12;
-      timeDigital.textContent = `${hours}:${minutes}:${seconds}`;
-      ampm.textContent = amPmText;
+      const day = now.getDate();
+      const month = now.toLocaleString('default', { month: 'short' });
+      const year = now.getFullYear();
+      const dayName = now.toLocaleDateString('en', { weekday: 'short' }).toUpperCase();
 
-      const weekdays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-      const day = weekdays[now.getDay()];
-      const date = now.getDate();
-      dateText.textContent = `${day} ${date}`;
-    }
-
-    function drawAnalogClock() {
-      const now = new Date();
-      const radius = analogCanvas.width / 2;
-      ctx.clearRect(0, 0, analogCanvas.width, analogCanvas.height);
-      ctx.save();
-      ctx.translate(radius, radius);
-
-      ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue("--fg");
-      ctx.lineWidth = 8;
-      ctx.beginPath();
-      ctx.arc(0, 0, radius - 10, 0, 2 * Math.PI);
-      ctx.stroke();
-
-      for (let num = 1; num <= 12; num++) {
-        const angle = (num * Math.PI) / 6;
-        ctx.rotate(angle);
-        ctx.translate(0, -radius + 30);
-        ctx.rotate(-angle);
-        ctx.fillStyle = getComputedStyle(document.body).getPropertyValue("--fg");
-        ctx.font = "18px Share Tech Mono";
-        ctx.textAlign = "center";
-        ctx.fillText(num.toString(), 0, 6);
-        ctx.rotate(angle);
-        ctx.translate(0, radius - 30);
-        ctx.rotate(-angle);
+      if (!use24Hour) {
+        hours = hours % 12 || 12;
       }
 
+      digitalClock.textContent = `${hours.toString().padStart(2, '0')}:${minutes}:${seconds}`;
+      dateEl.textContent = `${dayName}, ${day} ${month} ${year}`;
+      analogDateBox.textContent = `${dayName} ${day}`;
+    }
+
+    function drawAnalog() {
+      const now = new Date();
       const sec = now.getSeconds();
       const min = now.getMinutes();
       const hr = now.getHours();
-      drawHand(((hr % 12) + min / 60) * 30, radius * 0.5, 6);
-      drawHand((min + sec / 60) * 6, radius * 0.75, 4);
-      drawHand(sec * 6, radius * 0.85, 2, true);
-      ctx.restore();
+      const w = analogClock.width = analogClock.offsetWidth;
+      const h = analogClock.height = analogClock.offsetHeight;
+      const r = w / 2;
 
-      const weekdays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-      const day = weekdays[now.getDay()];
-      const date = now.getDate();
-      analogDateBox.textContent = `${day} ${date}`;
-    }
+      ctx.clearRect(0, 0, w, h);
+      ctx.translate(r, r);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
 
-    function drawHand(angle, length, width, isSecond = false) {
-      angle = (angle * Math.PI) / 180;
+      // rotating seconds ring
       ctx.beginPath();
-      ctx.lineWidth = width;
-      ctx.lineCap = "round";
-      ctx.moveTo(0, 0);
-      ctx.rotate(angle);
-      ctx.lineTo(0, -length);
-      ctx.strokeStyle = isSecond ? "red" : getComputedStyle(document.body).getPropertyValue("--fg");
+      ctx.arc(0, 0, r - 4, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.rotate(-angle);
+      ctx.beginPath();
+      ctx.arc(0, 0, r - 4, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2) * (sec / 60));
+      ctx.strokeStyle = '#ffffffaa';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      // hands
+      ctx.rotate((Math.PI / 6) * ((hr % 12) + min / 60));
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, -r * 0.4);
+      ctx.stroke();
+      ctx.rotate(-(Math.PI / 6) * ((hr % 12) + min / 60));
+
+      ctx.rotate((Math.PI / 30) * min);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, -r * 0.6);
+      ctx.stroke();
+      ctx.rotate(-(Math.PI / 30) * min);
+
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
     }
 
     function updateClock() {
-      if (isAnalog) drawAnalogClock();
-      else updateDigitalClock();
+      updateTime();
+      if (showAnalog) {
+        digitalClock.style.display = 'none';
+        analogClock.style.display = 'block';
+        analogDateBox.style.display = showDate ? 'block' : 'none';
+        drawAnalog();
+      } else {
+        digitalClock.style.display = 'block';
+        analogClock.style.display = 'none';
+        analogDateBox.style.display = 'none';
+      }
+      dateEl.style.display = showDate ? 'block' : 'none';
     }
 
     setInterval(updateClock, 1000);
-    updateClock();
 
-    document.getElementById("toggle-mode").onclick = () => {
-      isAnalog = !isAnalog;
-      analogWrapper.style.display = isAnalog ? "flex" : "none";
-      digitalClock.style.display = isAnalog ? "none" : "flex";
-      analogDateBox.style.display = isAnalog && showDate ? "block" : "none";
-      dateText.style.display = !isAnalog && showDate ? "block" : "none";
+    document.getElementById('toggle-mode').onclick = () => {
+      showAnalog = !showAnalog;
+      updateClock();
     };
 
-    document.getElementById("toggle-date").onclick = () => {
+    document.getElementById('toggle-date').onclick = () => {
       showDate = !showDate;
-      analogDateBox.style.display = isAnalog && showDate ? "block" : "none";
-      dateText.style.display = !isAnalog && showDate ? "block" : "none";
+      updateClock();
     };
 
-    document.getElementById("toggle-theme").onclick = () => {
-      isDark = !isDark;
-      document.body.classList.toggle("light", !isDark);
+    document.getElementById('toggle-format').onclick = () => {
+      use24Hour = !use24Hour;
+      updateClock();
     };
 
-    document.getElementById("fullscreen").onclick = () => {
+    document.getElementById('toggle-fullscreen').onclick = () => {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen();
         document.body.classList.add("fullscreen-active");
@@ -262,15 +232,16 @@
       }
     };
 
-    document.addEventListener("fullscreenchange", () => {
-      const buttons = document.querySelector(".buttons");
+    document.addEventListener('fullscreenchange', () => {
+      const controlButtons = document.querySelector('.buttons');
       if (!document.fullscreenElement) {
-        document.body.classList.remove("fullscreen-active");
-        buttons.style.display = "flex";
+        controlButtons.style.display = 'flex';
       } else {
-        buttons.style.display = "none";
+        controlButtons.style.display = 'none';
       }
     });
+
+    updateClock();
   </script>
 </body>
 </html>
