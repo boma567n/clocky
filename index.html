@@ -138,8 +138,9 @@
           hours = hours % 12 || 12;
         }
 
-        // CHANGED: use innerHTML and wrap ampm in a span
-        digitalClock.innerHTML = `${hours.toString().padStart(2, '0')}:${minutes}:${seconds}${!use24Hour ? `<span class="ampm">${ampm}</span>` : ''}`;
+        // CHANGE: Only padStart in 24-hour mode
+        const hourStr = use24Hour ? hours.toString().padStart(2, '0') : hours.toString();
+        digitalClock.innerHTML = `${hourStr}:${minutes}:${seconds}${!use24Hour ? `<span class="ampm">${ampm}</span>` : ''}`;
         dateEl.textContent = `${dayName}, ${day} ${month} ${year}`;
       }
 
