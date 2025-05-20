@@ -44,8 +44,6 @@
     body.fullscreen-active footer {
       display: none !important;
     }
-
-    /* Ad banner with fixed width similar to buttons group */
     .ad-banner {
       width: 480px;
       max-width: 98vw;
@@ -96,6 +94,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      white-space: nowrap;
     }
     button:hover, select:hover {
       background: var(--accent);
@@ -113,6 +112,21 @@
       font-size: 12vw;
       text-align: center;
       display: none;
+      line-height: 1;
+      letter-spacing: 2px;
+    }
+    .digital-inner {
+      display: inline-block;
+      vertical-align: middle;
+    }
+    #clock-digital .ampm {
+      font-size: 0.4em;
+      vertical-align: super;
+      opacity: 0.7;
+      margin-left: 0.2em;
+    }
+    #clock-digital span, #clock-digital .ampm {
+      vertical-align: middle;
     }
     #date {
       font-size: 1vw;
@@ -131,6 +145,8 @@
       position: relative;
       width: 35vmin;
       height: 35vmin;
+      display: block;
+      background: transparent;
     }
     body.fullscreen-active canvas {
       width: 50vmin;
@@ -139,16 +155,12 @@
     body.fullscreen-active {
       cursor: none;
     }
-    .ampm {
-      font-size: 0.4em;
-      vertical-align: super;
-      opacity: 0.7;
-    }
     #share-btn svg {
       width: 18px;
       height: 18px;
       vertical-align: middle;
       fill: currentColor;
+      margin-right: 4px;
     }
     @media (max-width: 520px) {
       .ad-banner, .buttons {
@@ -166,7 +178,6 @@
 
   <!-- Top Ad Banner -->
   <div class="ad-banner">
-    <!-- Google AdSense test code, swap with real client/slot when live -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
     <ins class="adsbygoogle"
          style="display:block; height:60px; width:100%; margin:0 auto;"
@@ -188,7 +199,7 @@
       Fullscreen
     </button>
     <button id="share-btn" title="Share Clocky">
-      <svg viewBox="0 0 24 24"><path d="M18 8a3 3 0 1 0-2.83-2H8.83A3 3 0 1 0 6 15.17V17a1 1 0 0 0 2 0v-1.83A3 3 0 0 0 11.83 10h6.34A3 3 0 1 0 18 8zm-8 7a1 1 0 1 1 1-1 1 1 0 0 1-1 1zm8-8a1 1 0 1 1-1 1[...]
+      <svg viewBox="0 0 24 24"><path d="M18 8a3 3 0 1 0-2.83-2A3 3 0 1 0 6 15.17V17a1 1 0 0 0 2 0v-1.83A3 3 0 0 0 11.83 10h6.34A3 3 0 1 0 18 8zm-8 7a1 1 0 1 1 1-1 1 1 0 0 1-1 1zm8-8a1 1 0 1 1-1 1 1 1 0 0 1 1-1z"></path></svg>
       Share
     </button>
   </div>
@@ -197,13 +208,12 @@
     <div id="clock-digital"></div>
     <div id="date"></div>
     <div class="analog-wrapper">
-      <canvas id="clock-analog"></canvas>
+      <canvas id="clock-analog" width="400" height="400"></canvas>
     </div>
   </main>
 
   <!-- Bottom Ad Banner -->
   <div class="ad-banner">
-    <!-- Google AdSense test code, swap with real client/slot when live -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
     <ins class="adsbygoogle"
          style="display:block; height:60px; width:100%; margin:0 auto;"
@@ -225,9 +235,6 @@
       const digitalClock = document.getElementById('clock-digital');
       const analogClock = document.getElementById('clock-analog');
       const dateEl = document.getElementById('date');
-
-      const ctx = analogClock.getContext('2d');
-
       let showAnalog = true;
       let showDate = false;
       let use24Hour = false;
@@ -249,46 +256,64 @@
         }
 
         const hourStr = use24Hour ? hours.toString().padStart(2, '0') : hours.toString();
-        digitalClock.innerHTML = `${hourStr}:${minutes}:${seconds}${!use24Hour ? `<span class="ampm">${ampm}</span>` : ''}`;
+        digitalClock.innerHTML = `<span class="digital-inner">${hourStr}<span>:</span>${minutes}<span>:</span>${seconds}${!use24Hour ? `<span class="ampm">${ampm}</span>` : ''}</span>`;
         dateEl.textContent = `${dayName}, ${day} ${month} ${year}`;
       }
 
       function drawAnalog() {
+        const ctx = analogClock.getContext('2d');
+        // Get current display size of the canvas
+        const w = analogClock.offsetWidth;
+        const h = analogClock.offsetHeight;
+        // Set canvas drawing buffer size to match display size
+        analogClock.width = w;
+        analogClock.height = h;
+        const r = w / 2;
+        ctx.clearRect(0, 0, w, h);
+        ctx.save();
+        ctx.translate(r, r);
+
         const now = new Date();
         const sec = now.getSeconds();
         const min = now.getMinutes();
         const hr = now.getHours();
-        const w = analogClock.width = analogClock.offsetWidth;
-        const h = analogClock.height = analogClock.offsetHeight;
-        const r = w / 2;
 
-        ctx.clearRect(0, 0, w, h);
-        ctx.translate(r, r);
-        ctx.strokeStyle = '#cfc5ff';
-
-        // rotating seconds ring
+        // Seconds arc
         ctx.beginPath();
         ctx.arc(0, 0, r - 4, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2) * (sec / 60));
         ctx.strokeStyle = '#cfc5ff';
         ctx.lineWidth = 4;
         ctx.stroke();
 
-        // hands
+        // Hour hand
+        ctx.save();
         ctx.rotate((Math.PI / 6) * ((hr % 12) + min / 60));
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.lineTo(0, -r * 0.4);
+        ctx.strokeStyle = '#cfc5ff';
+        ctx.lineWidth = 6;
         ctx.stroke();
-        ctx.rotate(-(Math.PI / 6) * ((hr % 12) + min / 60));
+        ctx.restore();
 
+        // Minute hand
+        ctx.save();
         ctx.rotate((Math.PI / 30) * min);
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.lineTo(0, -r * 0.6);
+        ctx.strokeStyle = '#cfc5ff';
+        ctx.lineWidth = 4;
         ctx.stroke();
-        ctx.rotate(-(Math.PI / 30) * min);
+        ctx.restore();
 
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        // Center dot
+        ctx.beginPath();
+        ctx.arc(0, 0, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#cfc5ff';
+        ctx.fill();
+
+        ctx.restore();
       }
 
       function updateClock() {
@@ -372,7 +397,7 @@
               <li style="margin:10px 0"><a style="color:#cfc5ff" href="${tg}" target="_blank">Share on Telegram</a></li>
               <li style="margin:16px 0">
                 <input id="share-copy" value="${window.location.href}" style="width:85%;padding:3px 6px;border-radius:4px;border:none;font-size:1em;" readonly>
-                <button onclick="navigator.clipboard.writeText('${window.location.href}');this.innerText='Copied!';this.disabled=true;" style="margin-left:6px;background:#cfc5ff;color:#222;border:none[...]
+                <button onclick="navigator.clipboard.writeText('${window.location.href}');this.innerText='Copied!';this.disabled=true;" style="margin-left:6px;background:#cfc5ff;color:#222;border:none;">Copy</button>
               </li>
             </ul>
             </body>
