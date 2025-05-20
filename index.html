@@ -96,6 +96,7 @@
     #date {
       font-size: 1vw;
       margin-top: 10px;
+      margin-bottom: 24px; /* Added for extra space below the date */
       opacity: 0.8;
       display: none;
     }
@@ -286,7 +287,7 @@
           document.body.classList.add("fullscreen-active");
         } else {
           document.exitFullscreen();
-          document.body.classList.remove("fullscreen-active");
+          // Don't remove the class here
         }
       };
 
@@ -294,6 +295,10 @@
         const controlButtons = document.querySelector('.buttons');
         controlButtons.style.display = document.fullscreenElement ? 'none' : 'flex';
         document.body.style.cursor = document.fullscreenElement ? 'none' : 'default';
+        // Always remove 'fullscreen-active' when not in fullscreen
+        if (!document.fullscreenElement) {
+          document.body.classList.remove("fullscreen-active");
+        }
       });
 
       updateClock();
