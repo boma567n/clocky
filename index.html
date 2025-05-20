@@ -1,120 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Clocky</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Clocky - Fullscreen Online Clock</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
-    body {
-      background: #18132a;
-      color: #cfc5ff;
-      font-family: sans-serif;
-      text-align: center;
+    :root {
+      --bg: #000;
+      --fg: #cfc5ff;
+      --accent: #cfc5ff;
+    }
+
+    html, body {
       margin: 0;
       padding: 0;
+      overflow: hidden;
+      background-color: var(--bg);
+      color: var(--fg);
+      font-family: 'Share Tech Mono', monospace;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      cursor: default;
     }
+
     #clock-digital {
-      font-size: 3em;
-      margin: 20px;
+      font-size: 12vw;
+      text-align: center;
       display: none;
     }
-    #clock-analog {
-      width: 300px;
-      height: 300px;
-      background: #2a2340;
-      border-radius: 50%;
-      display: block;
-      margin: 30px auto 0 auto;
-    }
+
     #date {
-      margin: 10px;
-      font-size: 1.5em;
+      font-size: 1vw;
+      margin-top: 10px;
+      opacity: 0.8;
       display: none;
     }
-    .ampm {
-      font-size: 0.5em;
-      vertical-align: super;
+
+    canvas {
+      position: relative;
+      width: 35vmin;
+      height: 35vmin;
     }
+
+    body.fullscreen-active canvas {
+      width: 50vmin;
+      height: 50vmin;
+    }
+
+    .analog-wrapper {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
     .buttons {
-      margin: 20px;
+      position: absolute;
+      top: 20px;
       display: flex;
-      gap: 10px;
-      justify-content: center;
-      align-items: center;
       flex-wrap: wrap;
-    }
-    #date-format {
-      display: none;
-    }
-    /* Ad box styling */
-    #ad-box {
-      width: 320px;
-      height: 100px;
-      background: #30295a;
-      color: #fff;
-      margin: 20px auto;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
       justify-content: center;
-      font-size: 1.1em;
-      box-shadow: 0 2px 10px #0005;
-      min-height: 40px;
+      gap: 10px;
+      z-index: 10;
     }
-    /* Fullscreen adjustments */
-    .fullscreen-active #ad-box,
-    .fullscreen-active .buttons {
-      display: none !important;
+
+    button, select {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 10px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    button:hover, select:hover {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    body.fullscreen-active {
+      cursor: none;
+    }
+
+    /* ADDED: Smaller AM/PM indicator */
+    .ampm {
+      font-size: 0.4em;
+      vertical-align: super;
+      opacity: 0.7;
     }
   </style>
 </head>
 <body>
-  <!-- Analog Clock Canvas -->
-  <canvas id="clock-analog"></canvas>
-  <!-- Digital Clock Display -->
-  <div id="clock-digital"></div>
-  <!-- Date Display -->
-  <div id="date"></div>
-  <!-- Control Buttons -->
   <div class="buttons">
-    <button id="toggle-mode">Toggle Analog/Digital</button>
-    <button id="toggle-date">Show/Hide Date</button>
-    <select id="date-format">
-      <option value="dd/mm/yyyy">DD/MM/YYYY</option>
-      <option value="mm/dd/yyyy">MM/DD/YYYY</option>
-      <option value="yyyy/mm/dd">YYYY/MM/DD</option>
-    </select>
-    <button id="toggle-format">Toggle 24h/12h</button>
+    <button id="toggle-format">12/24 Hour</button>
+    <button id="toggle-mode">Analog/Digital</button>
+    <button id="toggle-date">Show Date</button>
     <button id="toggle-fullscreen">Fullscreen</button>
   </div>
-  <!-- Ad Placeholder -->
-  <div id="ad-box">
-    <!-- Replace this with your ad script (e.g., Google AdSense) -->
-    [Your Ad Could Be Here!]
+
+  <div id="clock-digital"></div>
+  <div id="date"></div>
+
+  <div class="analog-wrapper">
+    <canvas id="clock-analog"></canvas>
   </div>
+
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const digitalClock = document.getElementById('clock-digital');
       const analogClock = document.getElementById('clock-analog');
       const dateEl = document.getElementById('date');
-      const dateFormatSelect = document.getElementById('date-format');
-      const showDateBtn = document.getElementById('toggle-date');
 
       const ctx = analogClock.getContext('2d');
 
       let showAnalog = true;
       let showDate = false;
       let use24Hour = false;
-      let dateFormat = 'dd/mm/yyyy'; // default
-
-      function formatDate(day, month, year) {
-        month = month.toString().padStart(2, '0');
-        day = day.toString().padStart(2, '0');
-        switch(dateFormat) {
-          case 'dd/mm/yyyy': return `${day}/${month}/${year}`;
-          case 'mm/dd/yyyy': return `${month}/${day}/${year}`;
-          case 'yyyy/mm/dd': return `${year}/${month}/${day}`;
-        }
-      }
 
       function updateTime() {
         const now = new Date();
@@ -122,7 +128,7 @@
         const minutes = now.getMinutes().toString().padStart(2, '0');
         const seconds = now.getSeconds().toString().padStart(2, '0');
         const day = now.getDate();
-        const monthNum = now.getMonth() + 1;
+        const month = now.toLocaleString('en', { month: 'short' }).toUpperCase();
         const year = now.getFullYear();
         const dayName = now.toLocaleDateString('en', { weekday: 'short' }).toUpperCase();
 
@@ -132,10 +138,9 @@
           hours = hours % 12 || 12;
         }
 
-        const hourStr = use24Hour ? hours.toString().padStart(2, '0') : hours.toString();
-        digitalClock.innerHTML = `${hourStr}:${minutes}:${seconds}${!use24Hour ? `<span class="ampm">${ampm}</span>` : ''}`;
-
-        dateEl.textContent = `${dayName}, ${formatDate(day, monthNum, year)}`;
+        // CHANGED: use innerHTML and wrap ampm in a span
+        digitalClock.innerHTML = `${hours.toString().padStart(2, '0')}:${minutes}:${seconds}${!use24Hour ? `<span class="ampm">${ampm}</span>` : ''}`;
+        dateEl.textContent = `${dayName}, ${day} ${month} ${year}`;
       }
 
       function drawAnalog() {
@@ -148,7 +153,6 @@
         const r = w / 2;
 
         ctx.clearRect(0, 0, w, h);
-        ctx.save();
         ctx.translate(r, r);
         ctx.strokeStyle = '#cfc5ff';
 
@@ -159,25 +163,22 @@
         ctx.lineWidth = 4;
         ctx.stroke();
 
-        // hour hand
-        ctx.save();
+        // hands
         ctx.rotate((Math.PI / 6) * ((hr % 12) + min / 60));
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.lineTo(0, -r * 0.4);
         ctx.stroke();
-        ctx.restore();
+        ctx.rotate(-(Math.PI / 6) * ((hr % 12) + min / 60));
 
-        // minute hand
-        ctx.save();
         ctx.rotate((Math.PI / 30) * min);
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.lineTo(0, -r * 0.6);
         ctx.stroke();
-        ctx.restore();
+        ctx.rotate(-(Math.PI / 30) * min);
 
-        ctx.restore();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
       }
 
       function updateClock() {
@@ -191,7 +192,6 @@
           analogClock.style.display = 'none';
         }
         dateEl.style.display = showDate ? 'block' : 'none';
-        dateFormatSelect.style.display = showDate ? 'inline-block' : 'none';
       }
 
       setInterval(updateClock, 1000);
@@ -201,13 +201,8 @@
         updateClock();
       };
 
-      showDateBtn.onclick = () => {
+      document.getElementById('toggle-date').onclick = () => {
         showDate = !showDate;
-        updateClock();
-      };
-
-      dateFormatSelect.onchange = (e) => {
-        dateFormat = e.target.value;
         updateClock();
       };
 
@@ -219,25 +214,17 @@
       document.getElementById('toggle-fullscreen').onclick = () => {
         if (!document.fullscreenElement) {
           document.documentElement.requestFullscreen();
+          document.body.classList.add("fullscreen-active");
         } else {
           document.exitFullscreen();
+          document.body.classList.remove("fullscreen-active");
         }
       };
 
       document.addEventListener('fullscreenchange', () => {
         const controlButtons = document.querySelector('.buttons');
-        const adBox = document.getElementById('ad-box');
-        if (document.fullscreenElement) {
-          controlButtons.style.display = 'none';
-          adBox.style.display = 'none';
-          document.body.style.cursor = 'none';
-          document.body.classList.add('fullscreen-active');
-        } else {
-          controlButtons.style.display = 'flex';
-          adBox.style.display = 'flex';
-          document.body.style.cursor = 'default';
-          document.body.classList.remove('fullscreen-active');
-        }
+        controlButtons.style.display = document.fullscreenElement ? 'none' : 'flex';
+        document.body.style.cursor = document.fullscreenElement ? 'none' : 'default';
       });
 
       updateClock();
