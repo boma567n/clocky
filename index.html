@@ -40,24 +40,37 @@
     header {
       margin-bottom: 12px;
     }
+    /* Hide header & footer in fullscreen */
+    body.fullscreen-active header,
+    body.fullscreen-active footer {
+      display: none !important;
+    }
+    /* Ad banner tweaks: half width and centered */
     .ad-banner {
-      width: 100%;
+      width: 50vw; /* half width of viewport */
+      min-width: 280px;
+      max-width: 400px;
+      margin: 20px auto;
       display: flex;
       justify-content: center;
       align-items: center;
-      margin: 20px 0;
-      min-height: 120px;
+      min-height: 60px; /* optional, less height */
       background: rgba(200,200,200,0.07); /* subtle visual for dev */
       border: 1px dashed #bbb; /* optional, for dev */
       box-sizing: border-box;
       transition: min-height 0.3s;
     }
     .adsbygoogle {
-      min-height: 90px;
-      width: 100%;
+      display: block;
+      width: 100% !important;
+      min-width: 200px;
+      max-width: 336px;
+      min-height: 45px !important;
+      height: 60px;
+      margin: 0 auto;
     }
     body.fullscreen-active .ad-banner {
-      display: none;
+      display: none !important;
     }
     .buttons {
       display: flex;
@@ -75,6 +88,9 @@
       font-size: 14px;
       cursor: pointer;
       border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
     button:hover, select:hover {
       background: var(--accent);
@@ -96,7 +112,7 @@
     #date {
       font-size: 1vw;
       margin-top: 10px;
-      margin-bottom: 24px; /* Added for extra space below the date */
+      margin-bottom: 24px;
       opacity: 0.8;
       display: none;
     }
@@ -123,6 +139,13 @@
       vertical-align: super;
       opacity: 0.7;
     }
+    /* Make share button icon size consistent */
+    #share-btn svg {
+      width: 18px;
+      height: 18px;
+      vertical-align: middle;
+      fill: currentColor;
+    }
   </style>
 </head>
 <body>
@@ -130,12 +153,12 @@
     Clocky - Fullscreen Online Clock
   </header>
 
-  <!-- Top Ad Banner (AdSense test code) -->
+  <!-- Top Ad Banner -->
   <div class="ad-banner">
     <!-- Google AdSense test code, swap with real client/slot when live -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
     <ins class="adsbygoogle"
-         style="display:block; height:90px;"
+         style="display:block; height:60px; width:336px; margin:0 auto;"
          data-ad-client="ca-pub-0000000000000000"
          data-ad-slot="0000000000"
          data-ad-format="auto"
@@ -149,7 +172,14 @@
     <button id="toggle-format">12/24 Hour</button>
     <button id="toggle-mode">Analog/Digital</button>
     <button id="toggle-date">Show Date</button>
-    <button id="toggle-fullscreen">Fullscreen</button>
+    <button id="toggle-fullscreen">
+      <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm12-9h-5v2h3v3h2V5zm-5 14h5v-5h-2v3h-3v2zM5 5v5h2V7h3V5H5z"></path></svg>
+      Fullscreen
+    </button>
+    <button id="share-btn" title="Share Clocky">
+      <svg viewBox="0 0 24 24"><path d="M18 8a3 3 0 1 0-2.83-2H8.83A3 3 0 1 0 6 15.17V17a1 1 0 0 0 2 0v-1.83A3 3 0 0 0 11.83 10h6.34A3 3 0 1 0 18 8zm-8 7a1 1 0 1 1 1-1 1 1 0 0 1-1 1zm8-8a1 1 0 1 1-1 1 1 1 0 0 1 1-1z" /></svg>
+      Share
+    </button>
   </div>
 
   <main>
@@ -160,12 +190,12 @@
     </div>
   </main>
 
-  <!-- Bottom Ad Banner (AdSense test code) -->
+  <!-- Bottom Ad Banner -->
   <div class="ad-banner">
     <!-- Google AdSense test code, swap with real client/slot when live -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
     <ins class="adsbygoogle"
-         style="display:block; height:90px;"
+         style="display:block; height:60px; width:336px; margin:0 auto;"
          data-ad-client="ca-pub-0000000000000000"
          data-ad-slot="0000000000"
          data-ad-format="auto"
@@ -207,7 +237,6 @@
           hours = hours % 12 || 12;
         }
 
-        // CHANGE: Only padStart in 24-hour mode
         const hourStr = use24Hour ? hours.toString().padStart(2, '0') : hours.toString();
         digitalClock.innerHTML = `${hourStr}:${minutes}:${seconds}${!use24Hour ? `<span class="ampm">${ampm}</span>` : ''}`;
         dateEl.textContent = `${dayName}, ${day} ${month} ${year}`;
@@ -287,7 +316,6 @@
           document.body.classList.add("fullscreen-active");
         } else {
           document.exitFullscreen();
-          // Don't remove the class here
         }
       };
 
@@ -295,11 +323,51 @@
         const controlButtons = document.querySelector('.buttons');
         controlButtons.style.display = document.fullscreenElement ? 'none' : 'flex';
         document.body.style.cursor = document.fullscreenElement ? 'none' : 'default';
-        // Always remove 'fullscreen-active' when not in fullscreen
         if (!document.fullscreenElement) {
           document.body.classList.remove("fullscreen-active");
         }
       });
+
+      // SHARE BUTTON
+      document.getElementById('share-btn').onclick = async () => {
+        const shareData = {
+          title: 'Clocky - Fullscreen Online Clock',
+          text: 'Check out this fullscreen online clock!',
+          url: window.location.href
+        };
+
+        if (navigator.share) {
+          try {
+            await navigator.share(shareData);
+          } catch (err) {
+            // User canceled or error occurred
+          }
+        } else {
+          // Fallback: Simple share popup
+          const shareUrl = encodeURIComponent(window.location.href);
+          const shareText = encodeURIComponent('Check out this fullscreen online clock:');
+          const fb = `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`;
+          const tw = `https://twitter.com/intent/tweet?text=${shareText}%20${shareUrl}`;
+          const wa = `https://api.whatsapp.com/send?text=${shareText}%20${shareUrl}`;
+          const tg = `https://t.me/share/url?url=${shareUrl}&text=${shareText}`;
+          const popup = window.open('', '', 'width=420,height=320');
+          popup.document.write(`
+            <body style="font-family:sans-serif;background:#222;color:#eee;margin:0;padding:24px;">
+            <h3 style="margin-top:0;color:#cfc5ff;">Share Clocky</h3>
+            <ul style="list-style:none;padding-left:0;font-size:1.1em;">
+              <li style="margin:10px 0"><a style="color:#cfc5ff" href="${fb}" target="_blank">Share on Facebook</a></li>
+              <li style="margin:10px 0"><a style="color:#cfc5ff" href="${tw}" target="_blank">Share on Twitter/X</a></li>
+              <li style="margin:10px 0"><a style="color:#cfc5ff" href="${wa}" target="_blank">Share on WhatsApp</a></li>
+              <li style="margin:10px 0"><a style="color:#cfc5ff" href="${tg}" target="_blank">Share on Telegram</a></li>
+              <li style="margin:16px 0">
+                <input id="share-copy" value="${window.location.href}" style="width:85%;padding:3px 6px;border-radius:4px;border:none;font-size:1em;" readonly>
+                <button onclick="navigator.clipboard.writeText('${window.location.href}');this.innerText='Copied!';this.disabled=true;" style="margin-left:6px;background:#cfc5ff;color:#222;border:none;padding:5px 12px;border-radius:3px;cursor:pointer;">Copy Link</button>
+              </li>
+            </ul>
+            </body>
+          `);
+        }
+      };
 
       updateClock();
     });
