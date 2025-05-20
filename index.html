@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=480, initial-scale=1.0, maximum-scale=1.0"/>
   <title>Clocky - Fullscreen Online Clock</title>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
@@ -40,23 +40,23 @@
     header {
       margin-bottom: 12px;
     }
-    /* Hide header & footer in fullscreen */
     body.fullscreen-active header,
     body.fullscreen-active footer {
       display: none !important;
     }
-    /* Ad banner tweaks: half width and centered */
+
+    /* Ad banner with fixed width similar to buttons group */
     .ad-banner {
-      width: 50vw; /* half width of viewport */
-      min-width: 280px;
-      max-width: 400px;
+      width: 480px;
+      max-width: 98vw;
+      min-width: 320px;
       margin: 20px auto;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 60px; /* optional, less height */
-      background: rgba(200,200,200,0.07); /* subtle visual for dev */
-      border: 1px dashed #bbb; /* optional, for dev */
+      min-height: 60px;
+      background: rgba(200,200,200,0.07);
+      border: 1px dashed #bbb;
       box-sizing: border-box;
       transition: min-height 0.3s;
     }
@@ -64,7 +64,7 @@
       display: block;
       width: 100% !important;
       min-width: 200px;
-      max-width: 336px;
+      max-width: 100%;
       min-height: 45px !important;
       height: 60px;
       margin: 0 auto;
@@ -72,6 +72,7 @@
     body.fullscreen-active .ad-banner {
       display: none !important;
     }
+
     .buttons {
       display: flex;
       flex-wrap: wrap;
@@ -79,6 +80,10 @@
       gap: 10px;
       z-index: 10;
       margin: 20px 0 0 0;
+      width: 480px;
+      max-width: 98vw;
+      min-width: 320px;
+      box-sizing: border-box;
     }
     button, select {
       background: transparent;
@@ -139,12 +144,18 @@
       vertical-align: super;
       opacity: 0.7;
     }
-    /* Make share button icon size consistent */
     #share-btn svg {
       width: 18px;
       height: 18px;
       vertical-align: middle;
       fill: currentColor;
+    }
+    @media (max-width: 520px) {
+      .ad-banner, .buttons {
+        width: 98vw;
+        min-width: 0;
+        max-width: 98vw;
+      }
     }
   </style>
 </head>
@@ -158,7 +169,7 @@
     <!-- Google AdSense test code, swap with real client/slot when live -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
     <ins class="adsbygoogle"
-         style="display:block; height:60px; width:336px; margin:0 auto;"
+         style="display:block; height:60px; width:100%; margin:0 auto;"
          data-ad-client="ca-pub-0000000000000000"
          data-ad-slot="0000000000"
          data-ad-format="auto"
@@ -177,7 +188,7 @@
       Fullscreen
     </button>
     <button id="share-btn" title="Share Clocky">
-      <svg viewBox="0 0 24 24"><path d="M18 8a3 3 0 1 0-2.83-2H8.83A3 3 0 1 0 6 15.17V17a1 1 0 0 0 2 0v-1.83A3 3 0 0 0 11.83 10h6.34A3 3 0 1 0 18 8zm-8 7a1 1 0 1 1 1-1 1 1 0 0 1-1 1zm8-8a1 1 0 1 1-1 1 1 1 0 0 1 1-1z" /></svg>
+      <svg viewBox="0 0 24 24"><path d="M18 8a3 3 0 1 0-2.83-2H8.83A3 3 0 1 0 6 15.17V17a1 1 0 0 0 2 0v-1.83A3 3 0 0 0 11.83 10h6.34A3 3 0 1 0 18 8zm-8 7a1 1 0 1 1 1-1 1 1 0 0 1-1 1zm8-8a1 1 0 1 1-1 1[...]
       Share
     </button>
   </div>
@@ -195,7 +206,7 @@
     <!-- Google AdSense test code, swap with real client/slot when live -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
     <ins class="adsbygoogle"
-         style="display:block; height:60px; width:336px; margin:0 auto;"
+         style="display:block; height:60px; width:100%; margin:0 auto;"
          data-ad-client="ca-pub-0000000000000000"
          data-ad-slot="0000000000"
          data-ad-format="auto"
@@ -361,7 +372,7 @@
               <li style="margin:10px 0"><a style="color:#cfc5ff" href="${tg}" target="_blank">Share on Telegram</a></li>
               <li style="margin:16px 0">
                 <input id="share-copy" value="${window.location.href}" style="width:85%;padding:3px 6px;border-radius:4px;border:none;font-size:1em;" readonly>
-                <button onclick="navigator.clipboard.writeText('${window.location.href}');this.innerText='Copied!';this.disabled=true;" style="margin-left:6px;background:#cfc5ff;color:#222;border:none;padding:5px 12px;border-radius:3px;cursor:pointer;">Copy Link</button>
+                <button onclick="navigator.clipboard.writeText('${window.location.href}');this.innerText='Copied!';this.disabled=true;" style="margin-left:6px;background:#cfc5ff;color:#222;border:none[...]
               </li>
             </ul>
             </body>
