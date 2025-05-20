@@ -122,17 +122,21 @@
       width: 100%;
       justify-content: center;
       align-items: center;
-      font-size: 12vw;
-      line-height: 1;
+      font-size: 6vw;
+      line-height: 1.1;
       text-align: center;
       min-width: 0;
+      /* transition for smooth resize */
+      transition: font-size 0.3s;
+    }
+    body.fullscreen-active #clock-digital {
+      font-size: 12vw;
     }
     .digital-flex {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 0;
-      /* Prevent clock from stretching container */
+      gap: 0.05em;
       min-width: 0;
     }
     .digital-num {
@@ -149,21 +153,21 @@
       align-items: center;
       justify-content: center;
       height: 1em;
-      font-size: 0.9em;
-      margin: 0 0.02em;
+      font-size: 0.85em;
+      margin: 0 0.01em;
       padding: 0;
       font-weight: normal;
       line-height: 1em;
       min-width: 0.4em;
-      /* Remove extra horizontal space */
     }
     .ampm {
+      display: flex;
+      align-items: center;
       font-size: 0.33em;
       opacity: 0.7;
-      margin-left: 0.18em;
-      align-self: flex-end;
+      margin-left: 0.15em;
       line-height: 1em;
-      padding-bottom: 0.08em;
+      padding-bottom: 0;
     }
     #date {
       font-size: 1vw;
@@ -211,6 +215,12 @@
       .buttons {
         flex-wrap: wrap;
       }
+      #clock-digital {
+        font-size: 10vw;
+      }
+      body.fullscreen-active #clock-digital {
+        font-size: 16vw;
+      }
     }
   </style>
 </head>
@@ -237,6 +247,7 @@
     <button id="toggle-format">12/24 Hour</button>
     <button id="toggle-mode">Analog/Digital</button>
     <button id="toggle-date">Show Date</button>
+    <button id="toggle-date-format">Date Format</button>
     <button id="toggle-fullscreen">
       <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm12-9h-5v2h3v3h2V5zm-5 14h5v-5h-2v3h-3v2zM5 5v5h2V7h3V5H5z"></path></svg>
       Fullscreen
@@ -278,9 +289,17 @@
       const digitalClock = document.getElementById('clock-digital');
       const analogClock = document.getElementById('clock-analog');
       const dateEl = document.getElementById('date');
+      const toggleDateFormatBtn = document.getElementById('toggle-date-format');
       let showAnalog = true;
       let showDate = false;
       let use24Hour = false;
+      // 0: dd/mm/yyyy, 1: mm/dd/yyyy, 2: yyyy/mm/dd
+      let dateFormatIndex = 0;
+      const dateFormats = [
+        { label: "dd/mm/yyyy", format: (d, m, y) => `${d} ${m} ${y}` },
+        { label: "mm/dd/yyyy", format: (d, m, y) => `${m} ${d} ${y}` },
+        { label: "yyyy/mm/dd", format: (d, m, y) => `${y} ${m} ${d}` },
+      ];
 
       function updateTime() {
         const now = new Date();
@@ -299,7 +318,6 @@
         }
         const hourStr = use24Hour ? hours.toString().padStart(2, '0') : hours.toString();
 
-        // Use tight flex layout for clock, with tight colon margins
         digitalClock.innerHTML =
           `<div class="digital-flex">
             <span class="digital-num">${hourStr}</span>
@@ -309,7 +327,11 @@
             <span class="digital-num">${seconds}</span>
             ${!use24Hour ? `<span class="ampm">${ampm}</span>` : ''}
           </div>`;
-        dateEl.textContent = `${dayName}, ${day} ${month} ${year}`;
+
+        // Date format switch
+        const fmt = dateFormats[dateFormatIndex];
+        dateEl.textContent = `${dayName}, ${fmt.format(day, month, year)}`;
+        toggleDateFormatBtn.textContent = "Date Format: " + fmt.label;
       }
 
       function drawAnalog() {
@@ -393,6 +415,11 @@
 
       document.getElementById('toggle-format').onclick = () => {
         use24Hour = !use24Hour;
+        updateClock();
+      };
+
+      document.getElementById('toggle-date-format').onclick = () => {
+        dateFormatIndex = (dateFormatIndex + 1) % dateFormats.length;
         updateClock();
       };
 
