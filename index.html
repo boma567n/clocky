@@ -206,7 +206,7 @@
           hours = hours % 12 || 12;
         }
 
-        // CHANGE: Only padStart in 24-hour mode
+        // Only padStart in 24-hour mode
         const hourStr = use24Hour ? hours.toString().padStart(2, '0') : hours.toString();
         digitalClock.innerHTML = `${hourStr}:${minutes}:${seconds}${!use24Hour ? `<span class="ampm">${ampm}</span>` : ''}`;
         dateEl.textContent = `${dayName}, ${day} ${month} ${year}`;
@@ -280,20 +280,27 @@
         updateClock();
       };
 
+      // Only handle fullscreen mode, don't touch classes here
       document.getElementById('toggle-fullscreen').onclick = () => {
         if (!document.fullscreenElement) {
           document.documentElement.requestFullscreen();
-          document.body.classList.add("fullscreen-active");
         } else {
           document.exitFullscreen();
-          document.body.classList.remove("fullscreen-active");
         }
       };
 
+      // Properly handle fullscreen class and UI on any way of entering/exiting fullscreen
       document.addEventListener('fullscreenchange', () => {
         const controlButtons = document.querySelector('.buttons');
-        controlButtons.style.display = document.fullscreenElement ? 'none' : 'flex';
-        document.body.style.cursor = document.fullscreenElement ? 'none' : 'default';
+        if (document.fullscreenElement) {
+          controlButtons.style.display = 'none';
+          document.body.style.cursor = 'none';
+          document.body.classList.add('fullscreen-active');
+        } else {
+          controlButtons.style.display = 'flex';
+          document.body.style.cursor = 'default';
+          document.body.classList.remove('fullscreen-active');
+        }
       });
 
       updateClock();
