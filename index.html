@@ -14,18 +14,17 @@
     html, body {
       margin: 0;
       padding: 0;
-      overflow: hidden;
+      height: 100%;
       background-color: var(--bg);
       color: var(--fg);
       font-family: 'Share Tech Mono', monospace;
-      display: flex;
-      flex-direction: column;
       min-height: 100vh;
       cursor: default;
     }
     body {
-      justify-content: space-between;
-      align-items: center;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
       height: 100vh;
     }
     header, footer {
@@ -36,6 +35,7 @@
       background: rgba(0,0,0,0.7);
       letter-spacing: 2px;
       font-size: 1.3em;
+      flex-shrink: 0;
     }
     header {
       margin-bottom: 12px;
@@ -44,15 +44,12 @@
     body.fullscreen-active footer {
       display: none !important;
     }
-    /* Ad and buttons consistent width */
-    .ad-banner, .buttons {
+    .ad-banner {
       width: 480px;
       max-width: 98vw;
       min-width: 220px;
       margin: 20px auto 0 auto;
       box-sizing: border-box;
-    }
-    .ad-banner {
       display: flex;
       justify-content: center;
       align-items: center;
@@ -61,6 +58,7 @@
       border: 1px dashed #bbb;
       transition: min-height 0.3s;
       margin-bottom: 0;
+      flex-shrink: 0;
     }
     .adsbygoogle {
       display: block;
@@ -75,14 +73,20 @@
       display: none !important;
     }
     .buttons {
+      width: 480px;
+      max-width: 98vw;
+      min-width: 220px;
+      margin-left: auto;
+      margin-right: auto;
+      margin-top: 20px;
       display: flex;
       flex-wrap: nowrap;
       justify-content: center;
       gap: 5px;
       z-index: 10;
-      margin-top: 20px;
-      margin-bottom: 0;
       min-width: 0;
+      flex-shrink: 0;
+      box-sizing: border-box;
     }
     button, select {
       background: transparent;
@@ -105,11 +109,12 @@
       color: var(--bg);
     }
     main {
+      flex: 1 0 auto;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      flex: 1 1 auto;
+      min-height: 0;
       width: 100%;
     }
     #clock-digital {
@@ -119,16 +124,16 @@
       align-items: center;
       font-size: 12vw;
       line-height: 1;
-      letter-spacing: 2px;
       text-align: center;
       min-width: 0;
     }
     .digital-flex {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 100%;
       gap: 0;
+      /* Prevent clock from stretching container */
+      min-width: 0;
     }
     .digital-num {
       display: flex;
@@ -137,22 +142,25 @@
       height: 1em;
       font-size: 1em;
       line-height: 1em;
+      min-width: 0;
     }
     .digital-colon {
       display: flex;
       align-items: center;
       justify-content: center;
       height: 1em;
-      font-size: 0.85em;
-      margin: 0 0.06em;
+      font-size: 0.9em;
+      margin: 0 0.02em;
       padding: 0;
       font-weight: normal;
       line-height: 1em;
+      min-width: 0.4em;
+      /* Remove extra horizontal space */
     }
     .ampm {
       font-size: 0.33em;
       opacity: 0.7;
-      margin-left: 0.25em;
+      margin-left: 0.18em;
       align-self: flex-end;
       line-height: 1em;
       padding-bottom: 0.08em;
@@ -290,7 +298,8 @@
           hours = hours % 12 || 12;
         }
         const hourStr = use24Hour ? hours.toString().padStart(2, '0') : hours.toString();
-        // Use flex to center numbers and colons vertically, small margin for colon
+
+        // Use tight flex layout for clock, with tight colon margins
         digitalClock.innerHTML =
           `<div class="digital-flex">
             <span class="digital-num">${hourStr}</span>
@@ -305,10 +314,8 @@
 
       function drawAnalog() {
         const ctx = analogClock.getContext('2d');
-        // Get current display size of the canvas
         const w = analogClock.offsetWidth;
         const h = analogClock.offsetHeight;
-        // Set canvas drawing buffer size to match display size
         analogClock.width = w;
         analogClock.height = h;
         const r = w / 2;
