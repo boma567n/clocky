@@ -97,15 +97,14 @@
       cursor: pointer;
       border-radius: 4px;
       white-space: nowrap;
-      flex-shrink: 1;
-      min-width: 0;
-      max-width: 100%;
       line-height: 1.2;
-      /* Remove display:flex, align-items, gap */
-      display: inline-block;
-      vertical-align: middle;
       box-sizing: border-box;
-      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
     }
     button svg, select svg {
       width: 16px;
