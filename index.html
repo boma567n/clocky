@@ -8,8 +8,8 @@
   <style>
     :root {
       --bg: #000;
-      --fg: #ffffff;
-      --accent: #ffffff;
+      --fg: #cfc5ff;
+      --accent: #cfc5ff;
     }
 
     html, body {
@@ -24,6 +24,7 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
+      cursor: default;
     }
 
     #clock-digital {
@@ -33,7 +34,7 @@
     }
 
     #date {
-      font-size: 2vw;
+      font-size: 1vw;
       margin-top: 10px;
       opacity: 0.8;
       display: none;
@@ -41,13 +42,13 @@
 
     canvas {
       position: relative;
-      width: 40vmin;
-      height: 40vmin;
+      width: 35vmin;
+      height: 35vmin;
     }
 
     body.fullscreen-active canvas {
-      width: 60vmin;
-      height: 60vmin;
+      width: 50vmin;
+      height: 50vmin;
     }
 
     .analog-wrapper {
@@ -55,20 +56,6 @@
       display: flex;
       justify-content: center;
       align-items: center;
-    }
-
-    .analog-date-box {
-      position: absolute;
-      top: 48%;
-      left: 68%;
-      transform: translate(-50%, -50%);
-      background: var(--fg);
-      color: var(--bg);
-      border-radius: 4px;
-      padding: 2px 6px;
-      font-size: 0.8vw;
-      font-weight: bold;
-      display: none;
     }
 
     .buttons {
@@ -114,134 +101,126 @@
 
   <div class="analog-wrapper">
     <canvas id="clock-analog"></canvas>
-    <div class="analog-date-box" id="analog-date-box"></div>
   </div>
 
   <script>
-    const digitalClock = document.getElementById('clock-digital');
-    const analogClock = document.getElementById('clock-analog');
-    const dateEl = document.getElementById('date');
-    const analogDateBox = document.getElementById('analog-date-box');
+    document.addEventListener('DOMContentLoaded', () => {
+      const digitalClock = document.getElementById('clock-digital');
+      const analogClock = document.getElementById('clock-analog');
+      const dateEl = document.getElementById('date');
 
-    const ctx = analogClock.getContext('2d');
+      const ctx = analogClock.getContext('2d');
 
-    let showAnalog = true;
-    let showDate = false;
-    let use24Hour = false;
+      let showAnalog = true;
+      let showDate = false;
+      let use24Hour = false;
 
-    function updateTime() {
-      const now = new Date();
-      let hours = now.getHours();
-      const minutes = now.getMinutes().toString().padStart(2, '0');
-      const seconds = now.getSeconds().toString().padStart(2, '0');
-      const day = now.getDate();
-      const month = now.toLocaleString('default', { month: 'short' });
-      const year = now.getFullYear();
-      const dayName = now.toLocaleDateString('en', { weekday: 'short' }).toUpperCase();
+      function updateTime() {
+        const now = new Date();
+        let hours = now.getHours();
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        const day = now.getDate();
+        const month = now.toLocaleString('en', { month: 'short' }).toUpperCase();
+        const year = now.getFullYear();
+        const dayName = now.toLocaleDateString('en', { weekday: 'short' }).toUpperCase();
 
-      if (!use24Hour) {
-        hours = hours % 12 || 12;
+        let ampm = '';
+        if (!use24Hour) {
+          ampm = hours >= 12 ? ' PM' : ' AM';
+          hours = hours % 12 || 12;
+        }
+
+        digitalClock.textContent = `${hours.toString().padStart(2, '0')}:${minutes}:${seconds}${!use24Hour ? ampm : ''}`;
+        dateEl.textContent = `${dayName}, ${day} ${month} ${year}`;
       }
 
-      digitalClock.textContent = `${hours.toString().padStart(2, '0')}:${minutes}:${seconds}`;
-      dateEl.textContent = `${dayName}, ${day} ${month} ${year}`;
-      analogDateBox.textContent = `${dayName} ${day}`;
-    }
+      function drawAnalog() {
+        const now = new Date();
+        const sec = now.getSeconds();
+        const min = now.getMinutes();
+        const hr = now.getHours();
+        const w = analogClock.width = analogClock.offsetWidth;
+        const h = analogClock.height = analogClock.offsetHeight;
+        const r = w / 2;
 
-    function drawAnalog() {
-      const now = new Date();
-      const sec = now.getSeconds();
-      const min = now.getMinutes();
-      const hr = now.getHours();
-      const w = analogClock.width = analogClock.offsetWidth;
-      const h = analogClock.height = analogClock.offsetHeight;
-      const r = w / 2;
+        ctx.clearRect(0, 0, w, h);
+        ctx.translate(r, r);
+        ctx.strokeStyle = '#cfc5ff';
 
-      ctx.clearRect(0, 0, w, h);
-      ctx.translate(r, r);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
+        // rotating seconds ring
+        ctx.beginPath();
+        ctx.arc(0, 0, r - 4, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2) * (sec / 60));
+        ctx.strokeStyle = '#cfc5ff';
+        ctx.lineWidth = 4;
+        ctx.stroke();
 
-      // rotating seconds ring
-      ctx.beginPath();
-      ctx.arc(0, 0, r - 4, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(0, 0, r - 4, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2) * (sec / 60));
-      ctx.strokeStyle = '#ffffffaa';
-      ctx.lineWidth = 4;
-      ctx.stroke();
+        // hands
+        ctx.rotate((Math.PI / 6) * ((hr % 12) + min / 60));
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, -r * 0.4);
+        ctx.stroke();
+        ctx.rotate(-(Math.PI / 6) * ((hr % 12) + min / 60));
 
-      // hands
-      ctx.rotate((Math.PI / 6) * ((hr % 12) + min / 60));
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(0, -r * 0.4);
-      ctx.stroke();
-      ctx.rotate(-(Math.PI / 6) * ((hr % 12) + min / 60));
+        ctx.rotate((Math.PI / 30) * min);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, -r * 0.6);
+        ctx.stroke();
+        ctx.rotate(-(Math.PI / 30) * min);
 
-      ctx.rotate((Math.PI / 30) * min);
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(0, -r * 0.6);
-      ctx.stroke();
-      ctx.rotate(-(Math.PI / 30) * min);
-
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-    }
-
-    function updateClock() {
-      updateTime();
-      if (showAnalog) {
-        digitalClock.style.display = 'none';
-        analogClock.style.display = 'block';
-        analogDateBox.style.display = showDate ? 'block' : 'none';
-        drawAnalog();
-      } else {
-        digitalClock.style.display = 'block';
-        analogClock.style.display = 'none';
-        analogDateBox.style.display = 'none';
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
       }
-      dateEl.style.display = showDate ? 'block' : 'none';
-    }
 
-    setInterval(updateClock, 1000);
+      function updateClock() {
+        updateTime();
+        if (showAnalog) {
+          digitalClock.style.display = 'none';
+          analogClock.style.display = 'block';
+          drawAnalog();
+        } else {
+          digitalClock.style.display = 'block';
+          analogClock.style.display = 'none';
+        }
+        dateEl.style.display = showDate ? 'block' : 'none';
+      }
 
-    document.getElementById('toggle-mode').onclick = () => {
-      showAnalog = !showAnalog;
+      setInterval(updateClock, 1000);
+
+      document.getElementById('toggle-mode').onclick = () => {
+        showAnalog = !showAnalog;
+        updateClock();
+      };
+
+      document.getElementById('toggle-date').onclick = () => {
+        showDate = !showDate;
+        updateClock();
+      };
+
+      document.getElementById('toggle-format').onclick = () => {
+        use24Hour = !use24Hour;
+        updateClock();
+      };
+
+      document.getElementById('toggle-fullscreen').onclick = () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+          document.body.classList.add("fullscreen-active");
+        } else {
+          document.exitFullscreen();
+          document.body.classList.remove("fullscreen-active");
+        }
+      };
+
+      document.addEventListener('fullscreenchange', () => {
+        const controlButtons = document.querySelector('.buttons');
+        controlButtons.style.display = document.fullscreenElement ? 'none' : 'flex';
+        document.body.style.cursor = document.fullscreenElement ? 'none' : 'default';
+      });
+
       updateClock();
-    };
-
-    document.getElementById('toggle-date').onclick = () => {
-      showDate = !showDate;
-      updateClock();
-    };
-
-    document.getElementById('toggle-format').onclick = () => {
-      use24Hour = !use24Hour;
-      updateClock();
-    };
-
-    document.getElementById('toggle-fullscreen').onclick = () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-        document.body.classList.add("fullscreen-active");
-      } else {
-        document.exitFullscreen();
-        document.body.classList.remove("fullscreen-active");
-      }
-    };
-
-    document.addEventListener('fullscreenchange', () => {
-      const controlButtons = document.querySelector('.buttons');
-      if (!document.fullscreenElement) {
-        controlButtons.style.display = 'flex';
-      } else {
-        controlButtons.style.display = 'none';
-      }
     });
-
-    updateClock();
   </script>
 </body>
 </html>
