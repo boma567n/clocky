@@ -11,7 +11,6 @@
       --fg: #cfc5ff;
       --accent: #cfc5ff;
     }
-
     html, body {
       margin: 0;
       padding: 0;
@@ -21,53 +20,42 @@
       font-family: 'Share Tech Mono', monospace;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+      min-height: 100vh;
       cursor: default;
     }
-
-    #clock-digital {
-      font-size: 12vw;
+    body {
+      justify-content: space-between;
+      align-items: center;
+      height: 100vh;
+    }
+    header, footer {
+      width: 100%;
       text-align: center;
-      display: none;
+      padding: 16px 0 12px 0;
+      color: var(--fg);
+      background: rgba(0,0,0,0.7);
+      letter-spacing: 2px;
+      font-size: 1.3em;
     }
-
-    #date {
-      font-size: 1vw;
-      margin-top: 10px;
-      opacity: 0.8;
-      display: none;
-    }
-
-    canvas {
-      position: relative;
-      width: 35vmin;
-      height: 35vmin;
-    }
-
-    body.fullscreen-active canvas {
-      width: 50vmin;
-      height: 50vmin;
-    }
-
-    .analog-wrapper {
-      position: relative;
+    .ad-banner {
+      width: 100%;
       display: flex;
       justify-content: center;
       align-items: center;
+      margin: 16px 0;
+      min-height: 90px;
     }
-
+    body.fullscreen-active .ad-banner {
+      display: none;
+    }
     .buttons {
-      position: absolute;
-      top: 20px;
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 10px;
       z-index: 10;
+      margin: 16px 0;
     }
-
     button, select {
       background: transparent;
       color: var(--accent);
@@ -77,17 +65,47 @@
       cursor: pointer;
       border-radius: 4px;
     }
-
     button:hover, select:hover {
       background: var(--accent);
       color: var(--bg);
     }
-
+    main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1 1 auto;
+      width: 100%;
+    }
+    #clock-digital {
+      font-size: 12vw;
+      text-align: center;
+      display: none;
+    }
+    #date {
+      font-size: 1vw;
+      margin-top: 10px;
+      opacity: 0.8;
+      display: none;
+    }
+    .analog-wrapper {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    canvas {
+      position: relative;
+      width: 35vmin;
+      height: 35vmin;
+    }
+    body.fullscreen-active canvas {
+      width: 50vmin;
+      height: 50vmin;
+    }
     body.fullscreen-active {
       cursor: none;
     }
-
-    /* ADDED: Smaller AM/PM indicator */
     .ampm {
       font-size: 0.4em;
       vertical-align: super;
@@ -96,6 +114,25 @@
   </style>
 </head>
 <body>
+  <header>
+    Clocky - Fullscreen Online Clock
+  </header>
+
+  <!-- Top Ad Banner (AdSense test code) -->
+  <div class="ad-banner">
+    <!-- Google AdSense test code, swap with real client/slot when live -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-0000000000000000"
+         data-ad-slot="0000000000"
+         data-ad-format="auto"
+         data-adtest="on"></ins>
+    <script>
+         (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+  </div>
+
   <div class="buttons">
     <button id="toggle-format">12/24 Hour</button>
     <button id="toggle-mode">Analog/Digital</button>
@@ -103,12 +140,32 @@
     <button id="toggle-fullscreen">Fullscreen</button>
   </div>
 
-  <div id="clock-digital"></div>
-  <div id="date"></div>
+  <main>
+    <div id="clock-digital"></div>
+    <div id="date"></div>
+    <div class="analog-wrapper">
+      <canvas id="clock-analog"></canvas>
+    </div>
+  </main>
 
-  <div class="analog-wrapper">
-    <canvas id="clock-analog"></canvas>
+  <!-- Bottom Ad Banner (AdSense test code) -->
+  <div class="ad-banner">
+    <!-- Google AdSense test code, swap with real client/slot when live -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-0000000000000000"
+         data-ad-slot="0000000000"
+         data-ad-format="auto"
+         data-adtest="on"></ins>
+    <script>
+         (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
   </div>
+
+  <footer>
+    &copy; 2025 Clocky. All rights reserved.
+  </footer>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
