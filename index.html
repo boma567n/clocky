@@ -37,13 +37,24 @@
       letter-spacing: 2px;
       font-size: 1.3em;
     }
+    header {
+      margin-bottom: 12px;
+    }
     .ad-banner {
       width: 100%;
       display: flex;
       justify-content: center;
       align-items: center;
-      margin: 16px 0;
+      margin: 20px 0;
+      min-height: 120px;
+      background: rgba(200,200,200,0.07); /* subtle visual for dev */
+      border: 1px dashed #bbb; /* optional, for dev */
+      box-sizing: border-box;
+      transition: min-height 0.3s;
+    }
+    .adsbygoogle {
       min-height: 90px;
+      width: 100%;
     }
     body.fullscreen-active .ad-banner {
       display: none;
@@ -54,7 +65,7 @@
       justify-content: center;
       gap: 10px;
       z-index: 10;
-      margin: 16px 0;
+      margin: 20px 0 0 0;
     }
     button, select {
       background: transparent;
@@ -123,7 +134,7 @@
     <!-- Google AdSense test code, swap with real client/slot when live -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
     <ins class="adsbygoogle"
-         style="display:block"
+         style="display:block; height:90px;"
          data-ad-client="ca-pub-0000000000000000"
          data-ad-slot="0000000000"
          data-ad-format="auto"
@@ -153,7 +164,7 @@
     <!-- Google AdSense test code, swap with real client/slot when live -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
     <ins class="adsbygoogle"
-         style="display:block"
+         style="display:block; height:90px;"
          data-ad-client="ca-pub-0000000000000000"
          data-ad-slot="0000000000"
          data-ad-format="auto"
